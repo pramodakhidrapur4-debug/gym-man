@@ -7,7 +7,7 @@ export const getDashboardData = async (req, res) => {
   try {
     const now = new Date();
     // Standardized start of current day for consistent date filter boundaries
-    const todayStart = new Date(now.getFullYear(), now.getMonth(), now.getDate(), 0, 0, 0, 0);
+    const todayStart = new Date(Date.UTC(now.getFullYear(), now.getMonth(), now.getDate()));
 
     const totalMembers = await Member.countDocuments();
     const activeMembers = await Member.countDocuments({ expiryDate: { $gte: todayStart } });

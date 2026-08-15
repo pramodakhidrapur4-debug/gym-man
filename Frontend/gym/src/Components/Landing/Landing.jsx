@@ -37,8 +37,8 @@ const Landing = () => {
       const storedToken = token || localStorage.getItem("gym_owner_token");
       if (storedToken) headers["Authorization"] = `Bearer ${storedToken}`;
 
-      const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || "http://localhost:8000/api";
-      const response = await fetch(`${API_BASE_URL}/dashboard`, {
+      const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || "https://gym-man-backend.onrender.com";
+      const response = await fetch(`${API_BASE_URL}/api/dashboard`, {
         method: "GET",
         headers,
         credentials: "include",

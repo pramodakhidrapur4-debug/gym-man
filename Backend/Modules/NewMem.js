@@ -12,7 +12,7 @@ const MembSchema = new mongoose.Schema(
     cloudinaryPublicId: { type: String, default: "" },
     startDate: { type: Date, default: Date.now },
     expiryDate: { type: Date, required: true },
-    duration: { type: mongoose.Schema.Types.Mixed, default: 30 }, // Duration in DAYS (integer > 0)
+    duration: { type: Number, default: 30, required: true }, // Duration in DAYS (integer > 0)
     totalAmount: { type: Number, required: true, min: 0 },
     paidAmount: { type: Number, required: true, min: 0, default: 0 },
     pendingAmount: { type: Number, required: true, default: 0 },
@@ -29,12 +29,12 @@ const MembSchema = new mongoose.Schema(
 MembSchema.virtual("membershipStatus").get(function () {
   if (!this.expiryDate) return "EXPIRED";
   const now = new Date();
+  
+  // Use UTC midnight for current day to match expiryDate storage
+  const todayStart = new Date(Date.UTC(now.getFullYear(), now.getMonth(), now.getDate()));
   const exp = new Date(this.expiryDate);
 
-  const todayStart = new Date(now.getFullYear(), now.getMonth(), now.getDate(), 0, 0, 0, 0);
-  const expEnd = new Date(exp.getFullYear(), exp.getMonth(), exp.getDate(), 23, 59, 59, 999);
-
-  return expEnd >= todayStart ? "ACTIVE" : "EXPIRED";
+  return exp >= todayStart ? "ACTIVE" : "EXPIRED";
 });
 
 // Unified Days Remaining Output
@@ -43,8 +43,8 @@ MembSchema.virtual("daysRemaining").get(function () {
   const now = new Date();
   const exp = new Date(this.expiryDate);
 
-  const todayStart = new Date(now.getFullYear(), now.getMonth(), now.getDate());
-  const expStart = new Date(exp.getFullYear(), exp.getMonth(), exp.getDate());
+  const todayStart = new Date(Date.UTC(now.getFullYear(), now.getMonth(), now.getDate()));
+  const expStart = new Date(Date.UTC(exp.getUTCFullYear(), exp.getUTCMonth(), exp.getUTCDate()));
 
   const diffMs = expStart.getTime() - todayStart.getTime();
   const diffDays = Math.round(diffMs / (1000 * 60 * 60 * 24));

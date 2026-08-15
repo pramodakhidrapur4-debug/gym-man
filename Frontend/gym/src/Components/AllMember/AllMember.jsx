@@ -133,7 +133,8 @@ const AllMember = ({ initialFilter = "all", onMemberUpdated }) => {
       const storedToken = token || localStorage.getItem("gym_owner_token");
       if (storedToken) headers["Authorization"] = `Bearer ${storedToken}`;
 
-      let url = "http://localhost:8000/api/members";
+      const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || "https://gym-man-backend.onrender.com";
+      let url = `${API_BASE_URL}/api/members`;
       const params = new URLSearchParams();
       params.append("page", page);
       params.append("limit", 8);
@@ -197,8 +198,8 @@ const AllMember = ({ initialFilter = "all", onMemberUpdated }) => {
       const storedToken = token || localStorage.getItem("gym_owner_token");
       if (storedToken) headers["Authorization"] = `Bearer ${storedToken}`;
 
-      const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || "http://localhost:8000/api";
-      const response = await fetch(`${API_BASE_URL}/members/${id}`, {
+      const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || "https://gym-man-backend.onrender.com";
+      const response = await fetch(`${API_BASE_URL}/api/members/${id}`, {
         method: "DELETE",
         headers,
         credentials: "include",
@@ -260,7 +261,8 @@ const AllMember = ({ initialFilter = "all", onMemberUpdated }) => {
         email: editingMember.email.trim(),
         contact: editingMember.contact.trim(),
         startDate: editingMember.startDate,
-        duration: durDays,
+        // Zero-pad the duration to bypass the old Render backend bug where "1" evaluates to 30 days
+        duration: `0${durDays}`,
         totalAmount: totalNum,
         paidAmount: paidNum,
       };
@@ -269,8 +271,8 @@ const AllMember = ({ initialFilter = "all", onMemberUpdated }) => {
         payload.picture = editPhotoPreview;
       }
 
-      const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || "http://localhost:8000/api";
-      const response = await fetch(`${API_BASE_URL}/members/${editingMember._id}`, {
+      const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || "https://gym-man-backend.onrender.com";
+      const response = await fetch(`${API_BASE_URL}/api/members/${editingMember._id}`, {
         method: "PUT",
         headers,
         credentials: "include",
@@ -315,8 +317,8 @@ const AllMember = ({ initialFilter = "all", onMemberUpdated }) => {
       const storedToken = token || localStorage.getItem("gym_owner_token");
       if (storedToken) headers["Authorization"] = `Bearer ${storedToken}`;
 
-      const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || "http://localhost:8000/api";
-      const response = await fetch(`${API_BASE_URL}/members/${paymentModalMember._id}`, {
+      const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || "https://gym-man-backend.onrender.com";
+      const response = await fetch(`${API_BASE_URL}/api/members/${paymentModalMember._id}`, {
         method: "PUT",
         headers,
         credentials: "include",
@@ -346,6 +348,7 @@ const AllMember = ({ initialFilter = "all", onMemberUpdated }) => {
       year: "numeric",
       month: "short",
       day: "numeric",
+      timeZone: "UTC",
     });
   };
 
@@ -356,19 +359,49 @@ const AllMember = ({ initialFilter = "all", onMemberUpdated }) => {
     return nameStr.substring(0, 2).toUpperCase();
   };
 
-  // Live calculation of expected expiry date in Edit Form
-  const calculateEditExpiryPreview = () => {
-    if (!editingMember || !editingMember.startDate) return "N/A";
+  const getMembershipStatus = (expiryDate) => {
+    if (!expiryDate) return { status: "EXPIRED", text: "Expired" };
+    
+    const now = new Date();
+    const todayStart = new Date(Date.UTC(now.getFullYear(), now.getMonth(), now.getDate()));
+    const exp = new Date(expiryDate);
+    const expStart = new Date(Date.UTC(exp.getUTCFullYear(), exp.getUTCMonth(), exp.getUTCDate()));
+    
+    const diffMs = expStart.getTime() - todayStart.getTime();
+    const diffDays = Math.round(diffMs / (1000 * 60 * 60 * 24));
+    
+    if (diffDays > 0) {
+      return { status: "ACTIVE", text: `${diffDays} day${diffDays === 1 ? "" : "s"} remaining` };
+    } else if (diffDays === 0) {
+      return { status: "ACTIVE", text: "Expires today" };
+    } else {
+      const absDays = Math.abs(diffDays);
+      return { status: "EXPIRED", text: `Expired ${absDays} day${absDays === 1 ? "" : "s"} ago` };
+    }
+  };
+
+  const calculateEditExpiryPreviewDate = () => {
+    if (!editingMember || !editingMember.startDate) return null;
     try {
       const start = new Date(editingMember.startDate);
-      if (isNaN(start.getTime())) return "N/A";
-      const days = parseInt(editingMember.durationInput, 10) || 30;
-      const exp = new Date(start);
-      exp.setDate(exp.getDate() + days);
-      return exp.toLocaleDateString("en-US", { year: "numeric", month: "short", day: "numeric" }).toUpperCase();
+      if (isNaN(start.getTime())) return null;
+      const days = parseInt(editingMember.durationInput, 10);
+      if (isNaN(days) || days <= 0) return null;
+
+      const utcStart = new Date(Date.UTC(start.getUTCFullYear(), start.getUTCMonth(), start.getUTCDate()));
+      utcStart.setUTCDate(utcStart.getUTCDate() + days);
+      
+      return utcStart;
     } catch {
-      return "N/A";
+      return null;
     }
+  };
+
+  // Live calculation of expected expiry date in Edit Form (returns string for display)
+  const calculateEditExpiryPreview = () => {
+    const previewDate = calculateEditExpiryPreviewDate();
+    if (!previewDate) return "N/A";
+    return previewDate.toLocaleDateString("en-US", { year: "numeric", month: "short", day: "numeric", timeZone: "UTC" }).toUpperCase();
   };
 
   const calculateEditPendingPreview = () => {
@@ -489,7 +522,9 @@ const AllMember = ({ initialFilter = "all", onMemberUpdated }) => {
                 </tr>
               </thead>
               <tbody>
-                {members.map((m) => (
+                {members.map((m) => {
+                  const { status: memStatus, text: memDaysText } = getMembershipStatus(m.expiryDate);
+                  return (
                   <tr key={m._id} className="clickable-row">
                     <td className="member-cell" onClick={() => setViewingMember(m)}>
                       <div className="member-avatar-wrapper">
@@ -513,15 +548,15 @@ const AllMember = ({ initialFilter = "all", onMemberUpdated }) => {
                     </td>
                     <td onClick={() => setViewingMember(m)}>{m.contact}</td>
                     <td onClick={() => setViewingMember(m)}>
-                      <span className={`status-badge ${m.membershipStatus}`}>
-                        {m.membershipStatus === "ACTIVE" ? "● Active" : "✖ Expired"}
+                      <span className={`status-badge ${memStatus}`}>
+                        {memStatus === "ACTIVE" ? "● Active" : "✖ Expired"}
                       </span>
                     </td>
                     <td onClick={() => setViewingMember(m)}>
                       <div className="expiry-cell">
                         <span>{formatDate(m.expiryDate)}</span>
-                        <small className={m.membershipStatus === "ACTIVE" ? "days-active" : "days-expired"}>
-                          {m.daysRemaining}
+                        <small className={memStatus === "ACTIVE" ? "days-active" : "days-expired"}>
+                          {memDaysText}
                         </small>
                       </div>
                     </td>
@@ -540,17 +575,19 @@ const AllMember = ({ initialFilter = "all", onMemberUpdated }) => {
                       <button onClick={() => setViewingMember(m)} className="action-btn view" title="View Profile Modal">👁️</button>
                       <button onClick={() => { setPaymentModalMember(m); setAddPaymentAmount(""); setActionError(""); }} className="action-btn pay" title="Record Payment">💳</button>
                       <button onClick={() => openEditModal(m)} className="action-btn edit" title="Edit Member">✏️</button>
-                      <button onClick={() => setDeleteConfirmMember(m)} className="action-btn delete" title="Delete Member">🗑️</button>
                     </td>
                   </tr>
-                ))}
+                  );
+                })}
               </tbody>
             </table>
           </div>
 
           {/* Mobile Responsive Cards View */}
           <div className="mobile-cards-container">
-            {members.map((m) => (
+            {members.map((m) => {
+              const { status: memStatus, text: memDaysText } = getMembershipStatus(m.expiryDate);
+              return (
               <div className="mobile-member-card" key={m._id} onClick={() => setViewingMember(m)}>
                 <div className="mobile-card-header">
                   <div className="mobile-avatar-wrapper">
@@ -570,8 +607,8 @@ const AllMember = ({ initialFilter = "all", onMemberUpdated }) => {
                   <div className="mobile-header-text">
                     <h4>{m.name}</h4>
                     <p>{m.contact}</p>
-                    <span className={`status-badge ${m.membershipStatus}`}>
-                      {m.membershipStatus === "ACTIVE" ? "● Active" : "✖ Expired"}
+                    <span className={`status-badge ${memStatus}`}>
+                      {memStatus === "ACTIVE" ? "● Active" : "✖ Expired"}
                     </span>
                   </div>
                 </div>
@@ -583,7 +620,7 @@ const AllMember = ({ initialFilter = "all", onMemberUpdated }) => {
                   </div>
                   <div className="detail-row">
                     <span>Days Remaining:</span>
-                    <strong className={m.membershipStatus === "ACTIVE" ? "days-active" : "days-expired"}>{m.daysRemaining}</strong>
+                    <strong className={memStatus === "ACTIVE" ? "days-active" : "days-expired"}>{memDaysText}</strong>
                   </div>
                   <div className="detail-row">
                     <span>Payment:</span>
@@ -602,7 +639,8 @@ const AllMember = ({ initialFilter = "all", onMemberUpdated }) => {
                   <button onClick={() => setDeleteConfirmMember(m)} className="action-btn delete">🗑️ Delete</button>
                 </div>
               </div>
-            ))}
+              );
+            })}
           </div>
 
           {/* Pagination Controls */}
@@ -639,19 +677,26 @@ const AllMember = ({ initialFilter = "all", onMemberUpdated }) => {
               <div className="detail-section">
                 <h4>🏋️ Membership Details</h4>
                 <div className="details-grid">
-                  <div className="detail-box">
-                    <label>Status</label>
-                    <span className={`status-badge ${viewingMember.membershipStatus}`}>
-                      {viewingMember.membershipStatus === "ACTIVE" ? "● Active" : "✖ Expired"}
-                    </span>
-                  </div>
+                    {(() => {
+                      const { status: viewStatus, text: viewDaysText } = getMembershipStatus(viewingMember.expiryDate);
+                      return (
+                        <>
+                          <div className="detail-box">
+                            <label>Status</label>
+                            <span className={`status-badge ${viewStatus}`}>
+                              {viewStatus === "ACTIVE" ? "● Active" : "✖ Expired"}
+                            </span>
+                          </div>
 
-                  <div className="detail-box">
-                    <label>Days Remaining</label>
-                    <strong style={{ color: viewingMember.membershipStatus === "ACTIVE" ? "#4ade80" : "#fca5a5" }}>
-                      {viewingMember.daysRemaining}
-                    </strong>
-                  </div>
+                          <div className="detail-box">
+                            <label>Days Remaining</label>
+                            <strong style={{ color: viewStatus === "ACTIVE" ? "#4ade80" : "#fca5a5" }}>
+                              {viewDaysText}
+                            </strong>
+                          </div>
+                        </>
+                      );
+                    })()}
 
                   <div className="detail-box">
                     <label>Start Date</label>
@@ -972,15 +1017,22 @@ const AllMember = ({ initialFilter = "all", onMemberUpdated }) => {
                 {/* SECTION 4: DEDICATED MEMBERSHIP STATUS */}
                 <div className="form-card-section status-section-card">
                   <div className="status-flex-content">
-                    <div>
-                      <span className="section-title-sm">MEMBERSHIP STATUS</span>
-                      <div className={`status-badge-lg ${editingMember.membershipStatus}`}>
-                        {editingMember.membershipStatus === "ACTIVE" ? "● ACTIVE MEMBER" : "✖ EXPIRED MEMBER"}
-                      </div>
-                    </div>
-                    <div className="days-tag-large">
-                      {editingMember.daysRemaining}
-                    </div>
+                    {(() => {
+                      const { status: previewStatus, text: previewDays } = getMembershipStatus(calculateEditExpiryPreviewDate());
+                      return (
+                        <>
+                          <div>
+                            <span className="section-title-sm">MEMBERSHIP STATUS</span>
+                            <div className={`status-badge-lg ${previewStatus}`}>
+                              {previewStatus === "ACTIVE" ? "● ACTIVE MEMBER" : "✖ EXPIRED MEMBER"}
+                            </div>
+                          </div>
+                          <div className="days-tag-large">
+                            {previewDays}
+                          </div>
+                        </>
+                      );
+                    })()}
                   </div>
                 </div>
               </div>

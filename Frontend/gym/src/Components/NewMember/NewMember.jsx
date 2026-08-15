@@ -99,10 +99,15 @@ const NewMember = ({ onMemberAdded }) => {
     try {
       const start = formData.startDate ? new Date(formData.startDate) : new Date();
       if (isNaN(start.getTime())) return "N/A";
-      const days = parseInt(formData.duration, 10) || 30;
-      const exp = new Date(start);
-      exp.setDate(exp.getDate() + days);
-      return exp.toLocaleDateString("en-US", { year: "numeric", month: "short", day: "numeric" });
+      
+      const days = parseInt(formData.duration, 10);
+      if (isNaN(days) || days <= 0) return "N/A";
+
+      // Normalize to UTC midnight to avoid local timezone shifts
+      const utcStart = new Date(Date.UTC(start.getUTCFullYear(), start.getUTCMonth(), start.getUTCDate()));
+      utcStart.setUTCDate(utcStart.getUTCDate() + days);
+      
+      return utcStart.toLocaleDateString("en-US", { year: "numeric", month: "short", day: "numeric", timeZone: "UTC" });
     } catch {
       return "N/A";
     }
@@ -289,8 +294,8 @@ const NewMember = ({ onMemberAdded }) => {
       const storedToken = token || localStorage.getItem("gym_owner_token");
       if (storedToken) headers["Authorization"] = `Bearer ${storedToken}`;
 
-      const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || "http://localhost:8000/api";
-      const response = await fetch(`${API_BASE_URL}/members`, {
+      const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || "https://gym-man-backend.onrender.com";
+      const response = await fetch(`${API_BASE_URL}/api/members`, {
         method: "POST",
         headers,
         credentials: "include",
@@ -299,7 +304,8 @@ const NewMember = ({ onMemberAdded }) => {
           email: formData.email.trim(),
           contact: formData.contact.trim(),
           startDate: formData.startDate,
-          duration: durationDays,
+          // Zero-pad the duration to bypass the old Render backend bug where "1" evaluates to 30 days
+          duration: `0${durationDays}`,
           totalAmount: total,
           paidAmount: paid,
           picture: formData.picture,

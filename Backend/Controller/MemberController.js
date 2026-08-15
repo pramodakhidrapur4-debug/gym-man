@@ -4,29 +4,36 @@ import mongoose from "mongoose";
 
 // Helper: Parse Duration in Days (Supporting preset strings for backward compatibility)
 export const parseDurationDays = (durInput) => {
-  if (!durInput) return 30;
+  if (durInput === undefined || durInput === null || durInput === "") {
+    throw new Error("Duration must be a positive integer.");
+  }
   const str = String(durInput).toLowerCase().trim();
 
   if (str === "1 week") return 7;
   if (str === "2 weeks") return 14;
-  if (str === "1 month" || str === "1") return 30;
-  if (str === "3 months" || str === "3") return 90;
-  if (str === "6 months" || str === "6") return 180;
-  if (str === "12 months" || str === "12" || str === "1 year") return 365;
+  if (str === "1 month") return 30;
+  if (str === "3 months") return 90;
+  if (str === "6 months") return 180;
+  if (str === "12 months" || str === "1 year") return 365;
 
   const parsed = parseInt(str, 10);
-  if (isNaN(parsed) || parsed <= 0) return 30;
+  if (isNaN(parsed) || parsed <= 0) {
+    throw new Error("Duration must be a positive integer.");
+  }
   return Math.min(parsed, 3650); // Cap at 10 years max
 };
 
 // Expiry Date Calculator Helper (Start Date + Duration in Days)
 const calculateExpiryDate = (startDateStr, durationDaysInput) => {
-  const start = startDateStr ? new Date(startDateStr) : new Date();
+  let start = startDateStr ? new Date(startDateStr) : new Date();
   if (isNaN(start.getTime())) throw new Error("Invalid start date provided.");
+
+  // Normalize to UTC midnight of the calendar day
+  start = new Date(Date.UTC(start.getUTCFullYear(), start.getUTCMonth(), start.getUTCDate()));
 
   const days = parseDurationDays(durationDaysInput);
   const exp = new Date(start);
-  exp.setDate(exp.getDate() + days);
+  exp.setUTCDate(exp.getUTCDate() + days);
   return { expiryDate: exp, durationDays: days };
 };
 
@@ -129,7 +136,7 @@ export const getAllMembers = async (req, res) => {
 
     // Standardized start of current day for consistent date filter boundaries
     const now = new Date();
-    const todayStart = new Date(now.getFullYear(), now.getMonth(), now.getDate(), 0, 0, 0, 0);
+    const todayStart = new Date(Date.UTC(now.getFullYear(), now.getMonth(), now.getDate()));
 
     // Backend-derived status filtering
     if (filter === "active") {
@@ -236,18 +243,22 @@ export const updateMember = async (req, res) => {
 
     const { name, email, contact, picture, startDate, duration, totalAmount, paidAmount } = req.body;
 
-    if (totalAmount !== undefined && Number(totalAmount) < 0) {
-      return res.status(400).json({
-        success: false,
-        message: "Total amount cannot be negative.",
-      });
+    if (totalAmount !== undefined) {
+      if (isNaN(Number(totalAmount)) || Number(totalAmount) < 0) {
+        return res.status(400).json({
+          success: false,
+          message: "Total amount must be a valid non-negative number.",
+        });
+      }
     }
 
-    if (paidAmount !== undefined && Number(paidAmount) < 0) {
-      return res.status(400).json({
-        success: false,
-        message: "Paid amount cannot be negative.",
-      });
+    if (paidAmount !== undefined) {
+      if (isNaN(Number(paidAmount)) || Number(paidAmount) < 0) {
+        return res.status(400).json({
+          success: false,
+          message: "Paid amount must be a valid non-negative number.",
+        });
+      }
     }
 
     const targetTotal = totalAmount !== undefined ? Number(totalAmount) : member.totalAmount;
