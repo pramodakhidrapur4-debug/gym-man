@@ -27,6 +27,7 @@ app.use(express.urlencoded({ extended: true, limit: '10mb' }));
 // Dynamic & Credentialed CORS Configuration
 const allowedOrigins = [
   process.env.CLIENT_URL,
+  "https://gym-mwb10o7wm-rasulallaattar-3062s-projects.vercel.app",
   "http://localhost:5174",
   "http://localhost:5173",
   "http://localhost:3000",
