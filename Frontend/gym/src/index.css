@@ -1,0 +1,117 @@
+@import url('https://fonts.googleapis.com/css2?family=Outfit:wght@400;500;600;700;800;900&family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap');
+
+/* ==========================================================================
+   POWER HOUSE MULTI GYM - GLOBAL CSS SYSTEM
+   ========================================================================== */
+
+:root {
+  /* Brand Color Palette */
+  --gold-primary: #ffcc00;
+  --gold-light: #ffea75;
+  --gold-dark: #e6b800;
+  --gold-gradient: linear-gradient(135deg, #ffcc00 0%, #ff9900 100%);
+  --gold-gradient-hover: linear-gradient(135deg, #ffe066 0%, #ffaa00 100%);
+  --gold-glow: rgba(255, 204, 0, 0.35);
+  --gold-glow-intense: rgba(255, 204, 0, 0.6);
+
+  /* Dark Luxury Theme Surfaces */
+  --dark-bg: #090b0e;
+  --dark-bg-alt: #0e1218;
+  --card-bg: rgba(17, 21, 28, 0.85);
+  --card-border: rgba(255, 204, 0, 0.2);
+  --card-border-hover: rgba(255, 204, 0, 0.45);
+  
+  --input-bg: rgba(10, 13, 18, 0.88);
+  --input-border: rgba(255, 204, 0, 0.25);
+
+  /* Status Colors */
+  --color-total: #38bdf8;
+  --color-earning: #10b981;
+  --color-pending: #f59e0b;
+  --color-paid: #22c55e;
+  --color-unpaid: #ef4444;
+
+  /* Typography */
+  --text-white: #ffffff;
+  --text-gold: #ffcc00;
+  --text-gold-light: #fff2a3;
+  --text-muted: #94a3b8;
+
+  --font-heading: 'Outfit', -apple-system, BlinkMacSystemFont, sans-serif;
+  --font-body: 'Plus Jakarta Sans', -apple-system, BlinkMacSystemFont, sans-serif;
+}
+
+/* Global Reset */
+*, *::before, *::after {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+}
+
+html {
+  scroll-behavior: smooth;
+  font-size: 16px;
+}
+
+body {
+  font-family: var(--font-body);
+  background-color: var(--dark-bg);
+  color: var(--text-white);
+  line-height: 1.6;
+  min-height: 100vh;
+  overflow-x: hidden;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+/* Hide native browser number input spinners */
+input[type="number"]::-webkit-inner-spin-button,
+input[type="number"]::-webkit-outer-spin-button {
+  -webkit-appearance: none;
+  margin: 0;
+}
+
+input[type="number"] {
+  -moz-appearance: textfield;
+}
+
+/* Custom Scrollbar */
+::-webkit-scrollbar {
+  width: 8px;
+  height: 8px;
+}
+
+::-webkit-scrollbar-track {
+  background: var(--dark-bg);
+}
+
+::-webkit-scrollbar-thumb {
+  background: rgba(255, 204, 0, 0.25);
+  border-radius: 4px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: var(--gold-primary);
+}
+
+/* Global Keyframe Animations */
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+    transform: translateY(12px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes pulseGlow {
+  0% { transform: scale(1) translate(0, 0); opacity: 0.2; }
+  100% { transform: scale(1.15) translate(-20px, 20px); opacity: 0.35; }
+}
+
+@keyframes buttonShimmer {
+  0% { transform: translateX(-100%) rotate(30deg); }
+  100% { transform: translateX(200%) rotate(30deg); }
+}

@@ -1,0 +1,7 @@
+.homee {
+  min-height: 100vh;
+  width: 100%;
+  background-color: var(--dark-bg, #090b0e);
+  display: flex;
+  flex-direction: column;
+}

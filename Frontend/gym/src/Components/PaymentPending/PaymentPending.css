@@ -1,0 +1,12 @@
+/* Payment Pending Status Panel */
+.payment-pending-panel {
+  position: relative;
+  width: 100%;
+  background: rgba(17, 21, 28, 0.85);
+  backdrop-filter: blur(20px);
+  border: 1px solid rgba(245, 158, 11, 0.3);
+  border-top: 3px solid #f59e0b;
+  border-radius: 22px;
+  padding: 2.5rem;
+  box-shadow: 0 20px 40px rgba(0, 0, 0, 0.8), 0 0 20px rgba(245, 158, 11, 0.15);
+}

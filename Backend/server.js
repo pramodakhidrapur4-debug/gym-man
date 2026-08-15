@@ -1,0 +1,88 @@
+import express from 'express';
+import dotenv from 'dotenv';
+import cors from 'cors';
+import mong from './config/mong.js';
+import adminRoutes from './Routes/adminRoutes.js';
+import memberRoutes from './Routes/memberRoutes.js';
+import dashboardRoutes from './Routes/dashboardRoutes.js';
+import { seedDefaultOwner } from './Controller/AdminController.js';
+
+dotenv.config();
+
+const app = express();
+
+// OWASP Security Headers Middleware
+app.use((req, res, next) => {
+  res.setHeader("X-Content-Type-Options", "nosniff");
+  res.setHeader("X-Frame-Options", "DENY");
+  res.setHeader("X-XSS-Protection", "1; mode=block");
+  res.setHeader("Referrer-Policy", "strict-origin-when-cross-origin");
+  next();
+});
+
+// Enable JSON body parsing with 10mb payload limit for image uploads
+app.use(express.json({ limit: '10mb' }));
+app.use(express.urlencoded({ extended: true, limit: '10mb' }));
+
+// Dynamic & Credentialed CORS Configuration
+const allowedOrigins = [
+  process.env.CLIENT_URL,
+  "http://localhost:5174",
+  "http://localhost:5173",
+  "http://localhost:3000",
+  "http://127.0.0.1:5174",
+  "http://127.0.0.1:5173",
+].filter(Boolean);
+
+app.use(
+  cors({
+    origin: (origin, callback) => {
+      // Allow requests with no origin (like server-to-server, mobile apps, postman)
+      if (!origin) return callback(null, true);
+
+      // Dynamically validate and mirror requesting origin for credentialed requests
+      if (
+        allowedOrigins.includes(origin) ||
+        origin.startsWith("http://localhost:") ||
+        origin.startsWith("http://127.0.0.1:") ||
+        process.env.NODE_ENV !== "production"
+      ) {
+        return callback(null, origin);
+      }
+
+      return callback(null, origin);
+    },
+    credentials: true,
+    methods: ["GET", "POST", "PUT", "DELETE", "OPTIONS"],
+    allowedHeaders: ["Content-Type", "Authorization", "X-Requested-With", "Accept"],
+  })
+);
+
+// Connect MongoDB Atlas & Seed Default Owner (Idempotent)
+mong();
+setTimeout(() => {
+  seedDefaultOwner();
+}, 2000);
+
+// Mounted API Endpoints
+app.use('/api/auth', adminRoutes);
+app.use('/api/admin', adminRoutes);
+app.use('/api/members', memberRoutes);
+app.use('/api/dashboard', dashboardRoutes);
+
+// Health Check Endpoint
+app.get('/api/health', (req, res) => {
+  res.json({ success: true, message: 'POWER HOUSE MULTI GYM Server running normally' });
+});
+
+// Centralized Unhandled Error Handling Middleware
+app.use((err, req, res, next) => {
+  console.error("Unhandled Error:", err.message);
+  res.status(err.status || 500).json({
+    success: false,
+    message: err.message || "Internal server error",
+  });
+});
+
+const PORT = process.env.PORT || 8000;
+app.listen(PORT, () => console.log(`Server running at http://localhost:${PORT}`));
