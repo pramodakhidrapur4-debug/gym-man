@@ -23,6 +23,7 @@ const NewMember = ({ onMemberAdded }) => {
   const [message, setMessage] = useState({ type: "", text: "" });
 
   const [isCameraOpen, setIsCameraOpen] = useState(false);
+  const [cameraFacingMode, setCameraFacingMode] = useState("user");
   const videoRef = useRef(null);
   const streamRef = useRef(null);
 
@@ -129,7 +130,7 @@ const NewMember = ({ onMemberAdded }) => {
     }
   };
 
-  const startCamera = async () => {
+  const startCamera = async (facingMode = cameraFacingMode) => {
     // Prevent starting if already uploading or showing preview
     if (isUploadingPhoto) return;
     
@@ -141,8 +142,9 @@ const NewMember = ({ onMemberAdded }) => {
     setFormData((prev) => ({ ...prev, picture: "" }));
 
     setIsCameraOpen(true);
+    setCameraFacingMode(facingMode);
     try {
-      const stream = await navigator.mediaDevices.getUserMedia({ video: { facingMode: "user" } });
+      const stream = await navigator.mediaDevices.getUserMedia({ video: { facingMode } });
       streamRef.current = stream;
       if (videoRef.current) {
         videoRef.current.srcObject = stream;
@@ -162,6 +164,14 @@ const NewMember = ({ onMemberAdded }) => {
     setIsCameraOpen(false);
   };
 
+  const flipCamera = async () => {
+    const newMode = cameraFacingMode === "user" ? "environment" : "user";
+    if (streamRef.current) {
+      streamRef.current.getTracks().forEach(track => track.stop());
+    }
+    await startCamera(newMode);
+  };
+
   const capturePhoto = () => {
     if (videoRef.current) {
       const canvas = document.createElement("canvas");
@@ -170,8 +180,10 @@ const NewMember = ({ onMemberAdded }) => {
       const ctx = canvas.getContext("2d");
       
       // Mirror the image horizontally if using front camera (standard behavior)
-      ctx.translate(canvas.width, 0);
-      ctx.scale(-1, 1);
+      if (cameraFacingMode === "user") {
+        ctx.translate(canvas.width, 0);
+        ctx.scale(-1, 1);
+      }
       
       ctx.drawImage(videoRef.current, 0, 0, canvas.width, canvas.height);
       
@@ -375,14 +387,13 @@ const NewMember = ({ onMemberAdded }) => {
           </div>
 
           <div className="form-group">
-            <label>Email Address *</label>
+            <label>Email Address</label>
             <input
               type="email"
               name="email"
-              placeholder="e.g. rahul@example.com"
+              placeholder="e.g. rahul@example.com (Optional)"
               value={formData.email}
               onChange={handleInputChange}
-              required
             />
           </div>
 
@@ -547,6 +558,9 @@ const NewMember = ({ onMemberAdded }) => {
                 <button type="button" className="cancel-camera-btn" onClick={stopCamera}>Cancel</button>
                 <button type="button" className="capture-camera-btn" onClick={capturePhoto}>
                   <div className="capture-inner-circle"></div>
+                </button>
+                <button type="button" className="flip-camera-btn" onClick={flipCamera} style={{ background: 'rgba(0,0,0,0.5)', border: '1px solid white', color: 'white', borderRadius: '4px', padding: '8px 12px', cursor: 'pointer' }}>
+                  🔄 Flip
                 </button>
               </div>
             </div>

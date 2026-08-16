@@ -373,7 +373,7 @@ const AllMember = ({ initialFilter = "all", onMemberUpdated }) => {
     if (diffDays > 0) {
       return { status: "ACTIVE", text: `${diffDays} day${diffDays === 1 ? "" : "s"} remaining` };
     } else if (diffDays === 0) {
-      return { status: "ACTIVE", text: "Expires today" };
+      return { status: "EXPIRED", text: "Expired today" };
     } else {
       const absDays = Math.abs(diffDays);
       return { status: "EXPIRED", text: `Expired ${absDays} day${absDays === 1 ? "" : "s"} ago` };
@@ -690,7 +690,7 @@ const AllMember = ({ initialFilter = "all", onMemberUpdated }) => {
 
                           <div className="detail-box">
                             <label>Days Remaining</label>
-                            <strong style={{ color: viewStatus === "ACTIVE" ? "#4ade80" : "#fca5a5" }}>
+                            <strong style={{ color: (parseInt(viewDaysText) > 0) ? "#4ade80" : "#fca5a5" }}>
                               {viewDaysText}
                             </strong>
                           </div>
@@ -899,7 +899,7 @@ const AllMember = ({ initialFilter = "all", onMemberUpdated }) => {
                       <label>EMAIL ADDRESS</label>
                       <div className="input-with-icon">
                         <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" className="input-icon"><path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"></path><polyline points="22,6 12,13 2,6"></polyline></svg>
-                        <input type="email" value={editingMember.email} onChange={(e) => setEditingMember({ ...editingMember, email: e.target.value })} required />
+                        <input type="email" value={editingMember.email} onChange={(e) => setEditingMember({ ...editingMember, email: e.target.value })} />
                       </div>
                     </div>
 

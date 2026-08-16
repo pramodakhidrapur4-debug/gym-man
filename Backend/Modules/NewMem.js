@@ -3,7 +3,7 @@ import mongoose from "mongoose";
 const MembSchema = new mongoose.Schema(
   {
     name: { type: String, required: true, trim: true },
-    email: { type: String, required: true, trim: true, lowercase: true },
+    email: { type: String, trim: true, lowercase: true, default: "" },
     contact: { type: String, required: true, trim: true },
     picture: {
       type: String,
@@ -34,7 +34,7 @@ MembSchema.virtual("membershipStatus").get(function () {
   const todayStart = new Date(Date.UTC(now.getFullYear(), now.getMonth(), now.getDate()));
   const exp = new Date(this.expiryDate);
 
-  return exp >= todayStart ? "ACTIVE" : "EXPIRED";
+  return exp > todayStart ? "ACTIVE" : "EXPIRED";
 });
 
 // Unified Days Remaining Output
@@ -52,7 +52,7 @@ MembSchema.virtual("daysRemaining").get(function () {
   if (diffDays > 0) {
     return `${diffDays} day${diffDays === 1 ? "" : "s"} remaining`;
   } else if (diffDays === 0) {
-    return "Expires today";
+    return "Expired today";
   } else {
     const absDays = Math.abs(diffDays);
     return `Expired ${absDays} day${absDays === 1 ? "" : "s"} ago`;

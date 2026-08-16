@@ -45,10 +45,10 @@ export const createMember = async (req, res) => {
     const { name, email, contact, picture, startDate, duration, totalAmount, paidAmount } = req.body;
 
     // 1. Input Validation
-    if (!name || !email || !contact) {
+    if (!name || !contact) {
       return res.status(400).json({
         success: false,
-        message: "Please fill in all required fields (Name, Email, Phone Contact).",
+        message: "Please fill in all required fields (Name, Phone Contact).",
       });
     }
 
@@ -98,7 +98,7 @@ export const createMember = async (req, res) => {
     // 4. Save to MongoDB
     const newMember = new Member({
       name: name.trim(),
-      email: email.trim().toLowerCase(),
+      email: email ? email.trim().toLowerCase() : "",
       contact: String(contact).trim(),
       picture: imageUrl,
       cloudinaryPublicId,
@@ -140,9 +140,9 @@ export const getAllMembers = async (req, res) => {
 
     // Backend-derived status filtering
     if (filter === "active") {
-      query.expiryDate = { $gte: todayStart };
+      query.expiryDate = { $gt: todayStart };
     } else if (filter === "expired") {
-      query.expiryDate = { $lt: todayStart };
+      query.expiryDate = { $lte: todayStart };
     } else if (filter === "paid") {
       query.paymentStatus = "PAID";
     } else if (filter === "pending") {
@@ -272,7 +272,7 @@ export const updateMember = async (req, res) => {
     }
 
     if (name) member.name = name.trim();
-    if (email) member.email = email.trim().toLowerCase();
+    if (email !== undefined) member.email = email ? email.trim().toLowerCase() : "";
     if (contact) member.contact = String(contact).trim();
 
     member.totalAmount = targetTotal;
