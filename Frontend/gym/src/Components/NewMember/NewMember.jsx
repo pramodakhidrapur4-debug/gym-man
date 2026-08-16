@@ -24,10 +24,10 @@ const NewMember = ({ onMemberAdded }) => {
   const [message, setMessage] = useState({ type: "", text: "" });
 
   const [isCameraOpen, setIsCameraOpen] = useState(false);
-  const [cameraFacingMode, setCameraFacingMode] = useState("user");
+  const [cameraFacingMode, setCameraFacingMode] = useState("environment");
   const videoRef = useRef(null);
   const cameraStreamRef = useRef(null);
-  const cameraFacingModeRef = useRef("user");
+  const cameraFacingModeRef = useRef("environment");
   const isCameraSwitchingRef = useRef(false);
 
   const { token } = useAuth();
@@ -137,7 +137,8 @@ const NewMember = ({ onMemberAdded }) => {
     }
   };
 
-  const startCamera = async (facingMode = "user") => {
+  const startCamera = async (e) => {
+    if (e && e.preventDefault) e.preventDefault();
     if (isUploadingPhoto) return;
 
     if (previewUrl && previewUrl.startsWith("blob:")) {
@@ -146,34 +147,48 @@ const NewMember = ({ onMemberAdded }) => {
     setPreviewUrl(null);
     setFormData((prev) => ({ ...prev, picture: "" }));
 
+    const initialMode = "environment";
+    cameraFacingModeRef.current = initialMode;
+    setCameraFacingMode(initialMode);
+
     setIsCameraOpen(true);
-    cameraFacingModeRef.current = facingMode;
-    setCameraFacingMode(facingMode);
 
     if (isCameraSwitchingRef.current) return;
     isCameraSwitchingRef.current = true;
 
     try {
+      if (videoRef.current?.srcObject) {
+        videoRef.current.srcObject.getTracks().forEach(track => track.stop());
+        videoRef.current.srcObject = null;
+      }
       if (cameraStreamRef.current) {
         cameraStreamRef.current.getTracks().forEach(track => track.stop());
         cameraStreamRef.current = null;
       }
-      if (videoRef.current) {
-        videoRef.current.srcObject = null;
-      }
 
       const stream = await navigator.mediaDevices.getUserMedia({ 
-        video: { facingMode: { ideal: facingMode } },
+        video: { facingMode: { ideal: initialMode } },
         audio: false
       });
 
       cameraStreamRef.current = stream;
       if (videoRef.current) {
         videoRef.current.srcObject = stream;
+        try {
+          await videoRef.current.play();
+        } catch (playErr) {
+          console.warn("Play interrupted", playErr);
+        }
       }
     } catch (err) {
       console.error("Error accessing camera:", err);
-      setMessage({ type: "error", text: "Could not access camera. Please check permissions." });
+      let errorMsg = "Could not access camera. Please check permissions.";
+      if (err.name === "NotAllowedError") errorMsg = "Camera access denied. Please allow camera permissions.";
+      else if (err.name === "NotFoundError") errorMsg = "No camera device found.";
+      else if (err.name === "NotReadableError") errorMsg = "Camera is already in use by another app.";
+      else if (err.name === "OverconstrainedError") errorMsg = "Requested camera type is not supported.";
+      
+      setMessage({ type: "error", text: errorMsg });
       setIsCameraOpen(false);
     } finally {
       isCameraSwitchingRef.current = false;
@@ -181,12 +196,13 @@ const NewMember = ({ onMemberAdded }) => {
   };
 
   const stopCamera = () => {
+    if (videoRef.current?.srcObject) {
+      videoRef.current.srcObject.getTracks().forEach(track => track.stop());
+      videoRef.current.srcObject = null;
+    }
     if (cameraStreamRef.current) {
       cameraStreamRef.current.getTracks().forEach(track => track.stop());
       cameraStreamRef.current = null;
-    }
-    if (videoRef.current) {
-      videoRef.current.srcObject = null;
     }
     isCameraSwitchingRef.current = false;
     setIsCameraOpen(false);
@@ -201,63 +217,57 @@ const NewMember = ({ onMemberAdded }) => {
     if (isCameraSwitchingRef.current) return;
     isCameraSwitchingRef.current = true;
 
-    const nextMode = cameraFacingModeRef.current === "user" ? "environment" : "user";
-    const previousMode = cameraFacingModeRef.current;
-
-    cameraFacingModeRef.current = nextMode;
-    setCameraFacingMode(nextMode);
+    const nextFacing = cameraFacingModeRef.current === "environment" ? "user" : "environment";
+    const previousFacing = cameraFacingModeRef.current;
 
     try {
-      let constraintsApplied = false;
-      const stream = cameraStreamRef.current;
-      
-      if (stream) {
-        const videoTrack = stream.getVideoTracks()[0];
-        if (videoTrack && typeof videoTrack.applyConstraints === 'function') {
-          try {
-            await videoTrack.applyConstraints({
-              facingMode: { exact: nextMode }
-            });
-            constraintsApplied = true;
-          } catch (constraintErr) {
-            console.warn("applyConstraints failed, falling back to getUserMedia", constraintErr);
-          }
+      if (videoRef.current?.srcObject) {
+        videoRef.current.srcObject.getTracks().forEach(track => track.stop());
+        videoRef.current.srcObject = null;
+      }
+      if (cameraStreamRef.current) {
+        cameraStreamRef.current.getTracks().forEach(track => track.stop());
+        cameraStreamRef.current = null;
+      }
+
+      const newStream = await navigator.mediaDevices.getUserMedia({
+        video: { facingMode: { ideal: nextFacing } },
+        audio: false
+      });
+
+      cameraStreamRef.current = newStream;
+      if (videoRef.current) {
+        videoRef.current.srcObject = newStream;
+        try {
+          await videoRef.current.play();
+        } catch (playErr) {
+          console.warn("Play interrupted", playErr);
         }
       }
 
-      if (!constraintsApplied) {
-        if (cameraStreamRef.current) {
-          cameraStreamRef.current.getTracks().forEach(track => track.stop());
-          cameraStreamRef.current = null;
-        }
-        if (videoRef.current) {
-          videoRef.current.srcObject = null;
-        }
+      cameraFacingModeRef.current = nextFacing;
+      setCameraFacingMode(nextFacing);
 
-        const newStream = await navigator.mediaDevices.getUserMedia({
-          video: { facingMode: { ideal: nextMode } },
-          audio: false
-        });
-
-        cameraStreamRef.current = newStream;
-        if (videoRef.current) {
-          videoRef.current.srcObject = newStream;
-        }
-      }
     } catch (err) {
       console.error("Camera switch failed:", err);
-      cameraFacingModeRef.current = previousMode;
-      setCameraFacingMode(previousMode);
-      setMessage({ type: "error", text: "Could not switch camera. Keeping current camera." });
+      let errorMsg = "Could not switch camera. Keeping current camera.";
+      if (err.name === "NotAllowedError") errorMsg = "Camera access denied.";
+      else if (err.name === "NotFoundError") errorMsg = "Secondary camera not found.";
+      else if (err.name === "NotReadableError") errorMsg = "Camera in use by another app.";
+      
+      setMessage({ type: "error", text: errorMsg });
       
       try {
         const recoverStream = await navigator.mediaDevices.getUserMedia({
-          video: { facingMode: { ideal: previousMode } },
+          video: { facingMode: { ideal: previousFacing } },
           audio: false
         });
         cameraStreamRef.current = recoverStream;
         if (videoRef.current) {
           videoRef.current.srcObject = recoverStream;
+          try {
+            await videoRef.current.play();
+          } catch(err) {}
         }
       } catch (recoveryErr) {
         setIsCameraOpen(false);
