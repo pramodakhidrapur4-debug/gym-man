@@ -170,7 +170,6 @@ const NewMember = ({ onMemberAdded }) => {
       cameraStreamRef.current = stream;
       if (videoRef.current) {
         videoRef.current.srcObject = stream;
-        await videoRef.current.play();
       }
     } catch (err) {
       console.error("Error accessing camera:", err);
@@ -193,7 +192,12 @@ const NewMember = ({ onMemberAdded }) => {
     setIsCameraOpen(false);
   };
 
-  const handleFlipCamera = async () => {
+  const handleFlipCamera = async (e) => {
+    if (e) {
+      e.preventDefault();
+      e.stopPropagation();
+    }
+
     if (isCameraSwitchingRef.current) return;
     isCameraSwitchingRef.current = true;
 
@@ -204,23 +208,41 @@ const NewMember = ({ onMemberAdded }) => {
     setCameraFacingMode(nextMode);
 
     try {
-      if (cameraStreamRef.current) {
-        cameraStreamRef.current.getTracks().forEach(track => track.stop());
-        cameraStreamRef.current = null;
-      }
-      if (videoRef.current) {
-        videoRef.current.srcObject = null;
+      let constraintsApplied = false;
+      const stream = cameraStreamRef.current;
+      
+      if (stream) {
+        const videoTrack = stream.getVideoTracks()[0];
+        if (videoTrack && typeof videoTrack.applyConstraints === 'function') {
+          try {
+            await videoTrack.applyConstraints({
+              facingMode: { exact: nextMode }
+            });
+            constraintsApplied = true;
+          } catch (constraintErr) {
+            console.warn("applyConstraints failed, falling back to getUserMedia", constraintErr);
+          }
+        }
       }
 
-      const newStream = await navigator.mediaDevices.getUserMedia({
-        video: { facingMode: { ideal: nextMode } },
-        audio: false
-      });
+      if (!constraintsApplied) {
+        if (cameraStreamRef.current) {
+          cameraStreamRef.current.getTracks().forEach(track => track.stop());
+          cameraStreamRef.current = null;
+        }
+        if (videoRef.current) {
+          videoRef.current.srcObject = null;
+        }
 
-      cameraStreamRef.current = newStream;
-      if (videoRef.current) {
-        videoRef.current.srcObject = newStream;
-        await videoRef.current.play();
+        const newStream = await navigator.mediaDevices.getUserMedia({
+          video: { facingMode: { ideal: nextMode } },
+          audio: false
+        });
+
+        cameraStreamRef.current = newStream;
+        if (videoRef.current) {
+          videoRef.current.srcObject = newStream;
+        }
       }
     } catch (err) {
       console.error("Camera switch failed:", err);
@@ -228,7 +250,6 @@ const NewMember = ({ onMemberAdded }) => {
       setCameraFacingMode(previousMode);
       setMessage({ type: "error", text: "Could not switch camera. Keeping current camera." });
       
-      // Try to recover previous camera
       try {
         const recoverStream = await navigator.mediaDevices.getUserMedia({
           video: { facingMode: { ideal: previousMode } },
@@ -237,7 +258,6 @@ const NewMember = ({ onMemberAdded }) => {
         cameraStreamRef.current = recoverStream;
         if (videoRef.current) {
           videoRef.current.srcObject = recoverStream;
-          await videoRef.current.play();
         }
       } catch (recoveryErr) {
         setIsCameraOpen(false);
@@ -248,7 +268,7 @@ const NewMember = ({ onMemberAdded }) => {
   };
 
   const capturePhoto = () => {
-    if (videoRef.current) {
+    if (videoRef.current && cameraStreamRef.current) {
       const canvas = document.createElement("canvas");
       canvas.width = videoRef.current.videoWidth || 640;
       canvas.height = videoRef.current.videoHeight || 480;
@@ -618,7 +638,12 @@ const NewMember = ({ onMemberAdded }) => {
                 playsInline
                 muted
                 className="live-video-feed"
-                onLoadedMetadata={() => videoRef.current.play()}
+                onLoadedMetadata={() => {
+                  if (videoRef.current) {
+                    videoRef.current.play().catch(console.warn);
+                  }
+                }}
+                style={{ transform: cameraFacingMode === "user" ? "scaleX(-1)" : "scaleX(1)" }}
               ></video>
               <div className="camera-overlay-actions">
                 <button type="button" className="cancel-camera-btn" onClick={stopCamera}>Cancel</button>
