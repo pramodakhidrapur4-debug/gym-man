@@ -29,8 +29,6 @@ const NewMember = ({ onMemberAdded }) => {
   const cameraStreamRef = useRef(null);
   const cameraFacingModeRef = useRef("user");
   const isCameraSwitchingRef = useRef(false);
-  const cameraRequestIdRef = useRef(0);
-  const pendingFlipModeRef = useRef(null);
 
   const { token } = useAuth();
 
@@ -152,16 +150,8 @@ const NewMember = ({ onMemberAdded }) => {
     cameraFacingModeRef.current = facingMode;
     setCameraFacingMode(facingMode);
 
-    if (isCameraSwitchingRef.current) {
-      pendingFlipModeRef.current = facingMode;
-      return;
-    }
-
+    if (isCameraSwitchingRef.current) return;
     isCameraSwitchingRef.current = true;
-    
-    // Increment request ID to detect stale requests
-    cameraRequestIdRef.current += 1;
-    const currentRequestId = cameraRequestIdRef.current;
 
     try {
       if (cameraStreamRef.current) {
@@ -172,49 +162,26 @@ const NewMember = ({ onMemberAdded }) => {
         videoRef.current.srcObject = null;
       }
 
-      const stream = await navigator.mediaDevices.getUserMedia({ video: { facingMode } });
-
-      // Check if a newer request was made while we were waiting
-      if (cameraRequestIdRef.current !== currentRequestId) {
-        stream.getTracks().forEach(track => track.stop());
-        return;
-      }
+      const stream = await navigator.mediaDevices.getUserMedia({ 
+        video: { facingMode: { ideal: facingMode } },
+        audio: false
+      });
 
       cameraStreamRef.current = stream;
       if (videoRef.current) {
         videoRef.current.srcObject = stream;
-        
-        // Wait for video to be ready
-        await new Promise(resolve => {
-          if (videoRef.current) {
-            videoRef.current.onloadedmetadata = resolve;
-          } else {
-            resolve();
-          }
-        });
+        await videoRef.current.play();
       }
     } catch (err) {
       console.error("Error accessing camera:", err);
       setMessage({ type: "error", text: "Could not access camera. Please check permissions." });
       setIsCameraOpen(false);
     } finally {
-      // Only release the lock if we are the most recent request
-      if (cameraRequestIdRef.current === currentRequestId) {
-        isCameraSwitchingRef.current = false;
-        
-        // Execute pending flip if requested during initialization
-        if (pendingFlipModeRef.current) {
-          const nextMode = pendingFlipModeRef.current;
-          pendingFlipModeRef.current = null;
-          startCamera(nextMode);
-        }
-      }
+      isCameraSwitchingRef.current = false;
     }
   };
 
   const stopCamera = () => {
-    cameraRequestIdRef.current += 1; // invalidate any pending requests
-    
     if (cameraStreamRef.current) {
       cameraStreamRef.current.getTracks().forEach(track => track.stop());
       cameraStreamRef.current = null;
@@ -222,22 +189,62 @@ const NewMember = ({ onMemberAdded }) => {
     if (videoRef.current) {
       videoRef.current.srcObject = null;
     }
-    
-    pendingFlipModeRef.current = null;
     isCameraSwitchingRef.current = false;
     setIsCameraOpen(false);
   };
 
-  const handleFlipCamera = () => {
-    // Determine target mode completely independently of React state
-    const currentMode = pendingFlipModeRef.current || cameraFacingModeRef.current;
-    const nextMode = currentMode === "user" ? "environment" : "user";
-    
+  const handleFlipCamera = async () => {
+    if (isCameraSwitchingRef.current) return;
+    isCameraSwitchingRef.current = true;
+
+    const nextMode = cameraFacingModeRef.current === "user" ? "environment" : "user";
+    const previousMode = cameraFacingModeRef.current;
+
     cameraFacingModeRef.current = nextMode;
-    // Update React state for UI mirroring immediately
     setCameraFacingMode(nextMode);
 
-    startCamera(nextMode);
+    try {
+      if (cameraStreamRef.current) {
+        cameraStreamRef.current.getTracks().forEach(track => track.stop());
+        cameraStreamRef.current = null;
+      }
+      if (videoRef.current) {
+        videoRef.current.srcObject = null;
+      }
+
+      const newStream = await navigator.mediaDevices.getUserMedia({
+        video: { facingMode: { ideal: nextMode } },
+        audio: false
+      });
+
+      cameraStreamRef.current = newStream;
+      if (videoRef.current) {
+        videoRef.current.srcObject = newStream;
+        await videoRef.current.play();
+      }
+    } catch (err) {
+      console.error("Camera switch failed:", err);
+      cameraFacingModeRef.current = previousMode;
+      setCameraFacingMode(previousMode);
+      setMessage({ type: "error", text: "Could not switch camera. Keeping current camera." });
+      
+      // Try to recover previous camera
+      try {
+        const recoverStream = await navigator.mediaDevices.getUserMedia({
+          video: { facingMode: { ideal: previousMode } },
+          audio: false
+        });
+        cameraStreamRef.current = recoverStream;
+        if (videoRef.current) {
+          videoRef.current.srcObject = recoverStream;
+          await videoRef.current.play();
+        }
+      } catch (recoveryErr) {
+        setIsCameraOpen(false);
+      }
+    } finally {
+      isCameraSwitchingRef.current = false;
+    }
   };
 
   const capturePhoto = () => {
@@ -248,7 +255,7 @@ const NewMember = ({ onMemberAdded }) => {
       const ctx = canvas.getContext("2d");
       
       // Mirror the image horizontally if using front camera (standard behavior)
-      if (cameraFacingMode === "user") {
+      if (cameraFacingModeRef.current === "user") {
         ctx.translate(canvas.width, 0);
         ctx.scale(-1, 1);
       }
