@@ -205,8 +205,10 @@
   transition: background-color 0.2s ease;
 }
 
-.clickable-row:hover {
-  background-color: rgba(255, 204, 0, 0.05);
+@media (hover: hover) and (pointer: fine) {
+  .clickable-row:hover {
+    background-color: rgba(255, 204, 0, 0.05);
+  }
 }
 
 .member-cell {
@@ -269,7 +271,9 @@
 }
 
 .member-name-link { color: #fff; transition: color 0.2s ease; }
-.clickable-row:hover .member-name-link { color: #ffcc00; }
+@media (hover: hover) and (pointer: fine) {
+  .clickable-row:hover .member-name-link { color: #ffcc00; }
+}
 .member-info-text strong { display: block; }
 .member-info-text small { color: #94a3b8; font-size: 0.78rem; }
 
@@ -322,7 +326,9 @@
 .action-btn.edit { background: rgba(255, 204, 0, 0.15); color: #ffea75; border: 1px solid rgba(255, 204, 0, 0.3); }
 .action-btn.delete { background: rgba(239, 68, 68, 0.2); color: #fca5a5; border: 1px solid rgba(239, 68, 68, 0.4); }
 
-.action-btn:hover { transform: translateY(-1px); }
+@media (hover: hover) and (pointer: fine) {
+  .action-btn:hover { transform: translateY(-1px); }
+}
 
 /* Mobile Cards View (< 900px) */
 .mobile-cards-container {
@@ -484,9 +490,11 @@
   transition: transform 0.3s ease, box-shadow 0.3s ease;
 }
 
-.large-avatar-wrapper:hover .large-profile-img {
-  transform: scale(1.05);
-  box-shadow: 0 0 35px rgba(255, 204, 0, 0.5);
+@media (hover: hover) and (pointer: fine) {
+  .large-avatar-wrapper:hover .large-profile-img {
+    transform: scale(1.05);
+    box-shadow: 0 0 35px rgba(255, 204, 0, 0.5);
+  }
 }
 
 .zoom-hint-badge {

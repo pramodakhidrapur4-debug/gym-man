@@ -59,13 +59,13 @@ app.use(
       // Allow requests with no origin (like server-to-server, mobile apps, postman)
       if (!origin) return callback(null, true);
 
-      // Dynamically validate and mirror requesting origin for credentialed requests
-      if (
-        allowedOrigins.includes(origin) ||
-        origin.startsWith("http://localhost:") ||
-        origin.startsWith("http://127.0.0.1:") ||
-        process.env.NODE_ENV !== "production"
-      ) {
+      // Strictly validate origin
+      if (allowedOrigins.includes(origin)) {
+        return callback(null, origin);
+      }
+      
+      // Allow local development dynamically only if in development mode
+      if (process.env.NODE_ENV === 'development' && (origin.startsWith("http://localhost:") || origin.startsWith("http://127.0.0.1:"))) {
         return callback(null, origin);
       }
 

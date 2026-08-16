@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useMemo, useCallback } from "react";
 import "./AllMember.css";
 import { useAuth } from "../../context/AuthContext";
 import { API_BASE_URL } from "../../config";
@@ -66,7 +66,7 @@ const AllMember = ({ initialFilter = "all", onMemberUpdated }) => {
     };
   }, [isAnyModalOpen]);
 
-  const openEditModal = (m) => {
+  const openEditModal = useCallback((m) => {
     const formattedDate = m.startDate ? new Date(m.startDate).toISOString().split("T")[0] : "";
     const editData = {
       ...m,
@@ -79,7 +79,7 @@ const AllMember = ({ initialFilter = "all", onMemberUpdated }) => {
     setInitialEditState(editData);
     setEditPhotoPreview(null);
     setActionError("");
-  };
+  }, []);
 
   const isEditDirty = () => {
     if (!editingMember || !initialEditState) return false;
@@ -340,10 +340,10 @@ const AllMember = ({ initialFilter = "all", onMemberUpdated }) => {
 
   const formatDate = (dateStr) => {
     if (!dateStr) return "N/A";
-    return new Date(dateStr).toLocaleDateString("en-US", {
-      year: "numeric",
+    return new Date(dateStr).toLocaleDateString("en-GB", {
+      day: "2-digit",
       month: "short",
-      day: "numeric",
+      year: "numeric",
       timeZone: "UTC",
     });
   };
@@ -397,7 +397,7 @@ const AllMember = ({ initialFilter = "all", onMemberUpdated }) => {
   const calculateEditExpiryPreview = () => {
     const previewDate = calculateEditExpiryPreviewDate();
     if (!previewDate) return "N/A";
-    return previewDate.toLocaleDateString("en-US", { year: "numeric", month: "short", day: "numeric", timeZone: "UTC" }).toUpperCase();
+    return previewDate.toLocaleDateString("en-GB", { day: "2-digit", month: "short", year: "numeric", timeZone: "UTC" }).toUpperCase();
   };
 
   const calculateEditPendingPreview = () => {
@@ -518,7 +518,7 @@ const AllMember = ({ initialFilter = "all", onMemberUpdated }) => {
                 </tr>
               </thead>
               <tbody>
-                {members.map((m) => {
+                {useMemo(() => members.map((m) => {
                   const { status: memStatus, text: memDaysText } = getMembershipStatus(m.expiryDate);
                   return (
                   <tr key={m._id} className="clickable-row">
@@ -527,6 +527,7 @@ const AllMember = ({ initialFilter = "all", onMemberUpdated }) => {
                         <img
                           src={m.picture}
                           alt={m.name}
+                          loading="lazy"
                           className="member-avatar"
                           onError={(e) => {
                             e.currentTarget.style.display = "none";
@@ -573,14 +574,14 @@ const AllMember = ({ initialFilter = "all", onMemberUpdated }) => {
                     </td>
                   </tr>
                   );
-                })}
+                }), [members, openEditModal])}
               </tbody>
             </table>
           </div>
 
           {/* Mobile Responsive Cards View */}
           <div className="mobile-cards-container">
-            {members.map((m) => {
+            {useMemo(() => members.map((m) => {
               const { status: memStatus, text: memDaysText } = getMembershipStatus(m.expiryDate);
               return (
               <div className="mobile-member-card" key={m._id} onClick={() => setViewingMember(m)}>
@@ -589,6 +590,7 @@ const AllMember = ({ initialFilter = "all", onMemberUpdated }) => {
                     <img
                       src={m.picture}
                       alt={m.name}
+                      loading="lazy"
                       className="mobile-avatar"
                       onError={(e) => {
                         e.currentTarget.style.display = "none";
@@ -635,7 +637,7 @@ const AllMember = ({ initialFilter = "all", onMemberUpdated }) => {
                 </div>
               </div>
               );
-            })}
+            }), [members, openEditModal])}
           </div>
 
           {/* Pagination Controls */}

@@ -109,7 +109,7 @@ const NewMember = ({ onMemberAdded }) => {
       const utcStart = new Date(Date.UTC(start.getUTCFullYear(), start.getUTCMonth(), start.getUTCDate()));
       utcStart.setUTCDate(utcStart.getUTCDate() + days);
       
-      return utcStart.toLocaleDateString("en-US", { year: "numeric", month: "short", day: "numeric", timeZone: "UTC" });
+      return utcStart.toLocaleDateString("en-GB", { day: "2-digit", month: "short", year: "numeric", timeZone: "UTC" });
     } catch {
       return "N/A";
     }

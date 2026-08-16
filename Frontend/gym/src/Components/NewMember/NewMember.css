@@ -168,10 +168,12 @@
   box-shadow: inset 0 0 20px rgba(255, 204, 0, 0.05);
 }
 
-.premium-photo-card:hover, .premium-photo-card.dragging {
-  border-color: #ffcc00;
-  background: rgba(255, 204, 0, 0.05);
-  box-shadow: 0 0 20px rgba(255, 204, 0, 0.2);
+@media (hover: hover) and (pointer: fine) {
+  .premium-photo-card:hover, .premium-photo-card.dragging {
+    border-color: #ffcc00;
+    background: rgba(255, 204, 0, 0.05);
+    box-shadow: 0 0 20px rgba(255, 204, 0, 0.2);
+  }
 }
 
 .premium-photo-card.has-photo {
@@ -201,9 +203,11 @@
   transition: transform 0.25s ease;
 }
 
-.premium-photo-card:hover .photo-icon-circle {
-  transform: scale(1.1);
-  background: rgba(255, 204, 0, 0.25);
+@media (hover: hover) and (pointer: fine) {
+  .premium-photo-card:hover .photo-icon-circle {
+    transform: scale(1.1);
+    background: rgba(255, 204, 0, 0.25);
+  }
 }
 
 .photo-upload-title {

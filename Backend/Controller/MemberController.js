@@ -174,7 +174,8 @@ export const getAllMembers = async (req, res) => {
     const members = await Member.find(query)
       .sort({ createdAt: -1 })
       .skip(skip)
-      .limit(limitNum);
+      .limit(limitNum)
+      .lean();
 
     return res.status(200).json({
       success: true,

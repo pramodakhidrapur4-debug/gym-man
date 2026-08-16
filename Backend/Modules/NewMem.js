@@ -75,6 +75,11 @@ MembSchema.pre("save", function (next) {
   }
 });
 
+// Performance Indexes
+MembSchema.index({ expiryDate: 1 });
+MembSchema.index({ pendingAmount: 1 });
+MembSchema.index({ name: 1, contact: 1 });
+
 const Member = mongoose.models.Member || mongoose.model("Member", MembSchema);
 
 export default Member;

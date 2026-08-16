@@ -169,10 +169,12 @@
   overflow: hidden;
 }
 
-.stat-card:hover {
-  transform: translateY(-4px);
-  border-color: rgba(255, 204, 0, 0.4);
-  box-shadow: 0 10px 25px rgba(0, 0, 0, 0.5);
+@media (hover: hover) and (pointer: fine) {
+  .stat-card:hover {
+    transform: translateY(-4px);
+    border-color: rgba(255, 204, 0, 0.4);
+    box-shadow: 0 10px 25px rgba(0, 0, 0, 0.5);
+  }
 }
 
 /* Active Card Highlighting Rule */
