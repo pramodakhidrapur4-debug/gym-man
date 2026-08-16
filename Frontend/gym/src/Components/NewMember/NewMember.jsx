@@ -26,9 +26,11 @@ const NewMember = ({ onMemberAdded }) => {
   const [isCameraOpen, setIsCameraOpen] = useState(false);
   const [cameraFacingMode, setCameraFacingMode] = useState("user");
   const videoRef = useRef(null);
-  const streamRef = useRef(null);
-  const isCameraInitializing = useRef(false);
-  const pendingFlipMode = useRef(null);
+  const cameraStreamRef = useRef(null);
+  const cameraFacingModeRef = useRef("user");
+  const isCameraSwitchingRef = useRef(false);
+  const cameraRequestIdRef = useRef(0);
+  const pendingFlipModeRef = useRef(null);
 
   const { token } = useAuth();
 
@@ -38,8 +40,12 @@ const NewMember = ({ onMemberAdded }) => {
       if (previewUrl && previewUrl.startsWith("blob:")) {
         URL.revokeObjectURL(previewUrl);
       }
-      if (streamRef.current) {
-        streamRef.current.getTracks().forEach(track => track.stop());
+      if (cameraStreamRef.current) {
+        cameraStreamRef.current.getTracks().forEach(track => track.stop());
+        cameraStreamRef.current = null;
+      }
+      if (videoRef.current) {
+        videoRef.current.srcObject = null;
       }
     };
   }, [previewUrl]);
@@ -133,11 +139,9 @@ const NewMember = ({ onMemberAdded }) => {
     }
   };
 
-  const startCamera = async (facingMode = cameraFacingMode) => {
-    // Prevent starting if already uploading or showing preview
+  const startCamera = async (facingMode = "user") => {
     if (isUploadingPhoto) return;
-    
-    // Revoke previous blob URL if exists
+
     if (previewUrl && previewUrl.startsWith("blob:")) {
       URL.revokeObjectURL(previewUrl);
     }
@@ -145,65 +149,95 @@ const NewMember = ({ onMemberAdded }) => {
     setFormData((prev) => ({ ...prev, picture: "" }));
 
     setIsCameraOpen(true);
+    cameraFacingModeRef.current = facingMode;
     setCameraFacingMode(facingMode);
 
-    // Prevent concurrent initialization race conditions
-    if (isCameraInitializing.current) {
-      pendingFlipMode.current = facingMode;
+    if (isCameraSwitchingRef.current) {
+      pendingFlipModeRef.current = facingMode;
       return;
     }
 
-    isCameraInitializing.current = true;
+    isCameraSwitchingRef.current = true;
+    
+    // Increment request ID to detect stale requests
+    cameraRequestIdRef.current += 1;
+    const currentRequestId = cameraRequestIdRef.current;
 
     try {
-      // Safely stop existing tracks before requesting a new camera
-      if (streamRef.current) {
-        streamRef.current.getTracks().forEach(track => track.stop());
-        streamRef.current = null;
+      if (cameraStreamRef.current) {
+        cameraStreamRef.current.getTracks().forEach(track => track.stop());
+        cameraStreamRef.current = null;
       }
       if (videoRef.current) {
         videoRef.current.srcObject = null;
       }
 
       const stream = await navigator.mediaDevices.getUserMedia({ video: { facingMode } });
-      streamRef.current = stream;
+
+      // Check if a newer request was made while we were waiting
+      if (cameraRequestIdRef.current !== currentRequestId) {
+        stream.getTracks().forEach(track => track.stop());
+        return;
+      }
+
+      cameraStreamRef.current = stream;
       if (videoRef.current) {
         videoRef.current.srcObject = stream;
+        
+        // Wait for video to be ready
+        await new Promise(resolve => {
+          if (videoRef.current) {
+            videoRef.current.onloadedmetadata = resolve;
+          } else {
+            resolve();
+          }
+        });
       }
     } catch (err) {
       console.error("Error accessing camera:", err);
       setMessage({ type: "error", text: "Could not access camera. Please check permissions." });
       setIsCameraOpen(false);
     } finally {
-      isCameraInitializing.current = false;
-      // If a flip was requested while initializing, process the queued flip now
-      if (pendingFlipMode.current) {
-        const nextMode = pendingFlipMode.current;
-        pendingFlipMode.current = null;
-        startCamera(nextMode);
+      // Only release the lock if we are the most recent request
+      if (cameraRequestIdRef.current === currentRequestId) {
+        isCameraSwitchingRef.current = false;
+        
+        // Execute pending flip if requested during initialization
+        if (pendingFlipModeRef.current) {
+          const nextMode = pendingFlipModeRef.current;
+          pendingFlipModeRef.current = null;
+          startCamera(nextMode);
+        }
       }
     }
   };
 
   const stopCamera = () => {
-    if (streamRef.current) {
-      streamRef.current.getTracks().forEach(track => track.stop());
-      streamRef.current = null;
+    cameraRequestIdRef.current += 1; // invalidate any pending requests
+    
+    if (cameraStreamRef.current) {
+      cameraStreamRef.current.getTracks().forEach(track => track.stop());
+      cameraStreamRef.current = null;
     }
     if (videoRef.current) {
       videoRef.current.srcObject = null;
     }
-    pendingFlipMode.current = null;
-    isCameraInitializing.current = false;
+    
+    pendingFlipModeRef.current = null;
+    isCameraSwitchingRef.current = false;
     setIsCameraOpen(false);
   };
 
-  const flipCamera = () => {
-    // Read the current state or the queued state to determine next mode safely
-    const currentMode = pendingFlipMode.current || cameraFacingMode;
-    const newMode = currentMode === "user" ? "environment" : "user";
+  const handleFlipCamera = () => {
+    // Determine target mode completely independently of React state
+    const currentMode = pendingFlipModeRef.current || cameraFacingModeRef.current;
+    const nextMode = currentMode === "user" ? "environment" : "user";
     
-    startCamera(newMode);
+    cameraFacingModeRef.current = nextMode;
+    // Update React state for UI mirroring immediately
+    setCameraFacingMode(nextMode);
+
+    startCamera(nextMode);
   };
 
   const capturePhoto = () => {
@@ -584,7 +618,7 @@ const NewMember = ({ onMemberAdded }) => {
                 <button type="button" className="capture-camera-btn" onClick={capturePhoto}>
                   <div className="capture-inner-circle"></div>
                 </button>
-                <button type="button" className="flip-camera-btn" onClick={flipCamera}>
+                <button type="button" className="flip-camera-btn" onClick={handleFlipCamera}>
                   🔄 Flip
                 </button>
               </div>
