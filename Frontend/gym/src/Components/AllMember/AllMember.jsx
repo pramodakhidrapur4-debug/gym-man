@@ -2,6 +2,7 @@ import React, { useState, useEffect, useMemo, useCallback } from "react";
 import "./AllMember.css";
 import { useAuth } from "../../context/AuthContext";
 import { API_BASE_URL } from "../../config";
+import { formatDisplayDate } from "../../utils/dateUtils";
 
 const AllMember = ({ initialFilter = "all", onMemberUpdated }) => {
   const [members, setMembers] = useState([]);
@@ -339,13 +340,7 @@ const AllMember = ({ initialFilter = "all", onMemberUpdated }) => {
   };
 
   const formatDate = (dateStr) => {
-    if (!dateStr) return "N/A";
-    return new Date(dateStr).toLocaleDateString("en-GB", {
-      day: "2-digit",
-      month: "short",
-      year: "numeric",
-      timeZone: "UTC",
-    });
+    return formatDisplayDate(dateStr);
   };
 
   const getInitials = (nameStr) => {
@@ -397,7 +392,7 @@ const AllMember = ({ initialFilter = "all", onMemberUpdated }) => {
   const calculateEditExpiryPreview = () => {
     const previewDate = calculateEditExpiryPreviewDate();
     if (!previewDate) return "N/A";
-    return previewDate.toLocaleDateString("en-GB", { day: "2-digit", month: "short", year: "numeric", timeZone: "UTC" }).toUpperCase();
+    return formatDisplayDate(previewDate);
   };
 
   const calculateEditPendingPreview = () => {

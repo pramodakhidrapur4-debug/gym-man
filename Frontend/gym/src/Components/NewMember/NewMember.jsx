@@ -2,6 +2,7 @@ import React, { useState, useEffect, useRef } from "react";
 import "./NewMember.css";
 import { useAuth } from "../../context/AuthContext";
 import { API_BASE_URL } from "../../config";
+import { formatDisplayDate } from "../../utils/dateUtils";
 
 const NewMember = ({ onMemberAdded }) => {
   const todayStr = new Date().toISOString().split("T")[0];
@@ -115,7 +116,7 @@ const NewMember = ({ onMemberAdded }) => {
       const utcStart = new Date(Date.UTC(start.getUTCFullYear(), start.getUTCMonth(), start.getUTCDate()));
       utcStart.setUTCDate(utcStart.getUTCDate() + days);
       
-      return utcStart.toLocaleDateString("en-GB", { day: "2-digit", month: "short", year: "numeric", timeZone: "UTC" });
+      return formatDisplayDate(utcStart);
     } catch {
       return "N/A";
     }
