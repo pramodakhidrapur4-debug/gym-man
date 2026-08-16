@@ -6,12 +6,10 @@ import Member from "../Modules/NewMem.js";
 export const getDashboardData = async (req, res) => {
   try {
     const now = new Date();
-    // Standardized start of current day for consistent date filter boundaries
-    const todayStart = new Date(Date.UTC(now.getFullYear(), now.getMonth(), now.getDate()));
 
     const totalMembers = await Member.countDocuments();
-    const activeMembers = await Member.countDocuments({ expiryDate: { $gte: todayStart } });
-    const expiredMembers = await Member.countDocuments({ expiryDate: { $lt: todayStart } });
+    const activeMembers = await Member.countDocuments({ expiryDate: { $gte: now } });
+    const expiredMembers = await Member.countDocuments({ expiryDate: { $lt: now } });
     const fullyPaidMembers = await Member.countDocuments({ pendingAmount: 0 });
     const pendingMembers = await Member.countDocuments({ pendingAmount: { $gt: 0 } });
 

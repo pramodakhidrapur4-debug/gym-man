@@ -25,15 +25,21 @@ export const parseDurationDays = (durInput) => {
 
 // Expiry Date Calculator Helper (Start Date + Duration in Days)
 const calculateExpiryDate = (startDateStr, durationDaysInput) => {
-  let start = startDateStr ? new Date(startDateStr) : new Date();
+  let start;
+  if (startDateStr) {
+    // Retain exact time of day for precise 24-hour elapsed calculations
+    const chosenDate = new Date(startDateStr);
+    const now = new Date();
+    chosenDate.setHours(now.getHours(), now.getMinutes(), now.getSeconds(), now.getMilliseconds());
+    start = chosenDate;
+  } else {
+    start = new Date();
+  }
+
   if (isNaN(start.getTime())) throw new Error("Invalid start date provided.");
 
-  // Normalize to UTC midnight of the calendar day
-  start = new Date(Date.UTC(start.getUTCFullYear(), start.getUTCMonth(), start.getUTCDate()));
-
   const days = parseDurationDays(durationDaysInput);
-  const exp = new Date(start);
-  exp.setUTCDate(exp.getUTCDate() + days);
+  const exp = new Date(start.getTime() + days * 24 * 60 * 60 * 1000);
   return { expiryDate: exp, durationDays: days };
 };
 

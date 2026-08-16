@@ -29,32 +29,25 @@ const MembSchema = new mongoose.Schema(
 MembSchema.virtual("membershipStatus").get(function () {
   if (!this.expiryDate) return "EXPIRED";
   const now = new Date();
-  
-  // Use UTC midnight for current day to match expiryDate storage
-  const todayStart = new Date(Date.UTC(now.getFullYear(), now.getMonth(), now.getDate()));
   const exp = new Date(this.expiryDate);
 
-  return exp > todayStart ? "ACTIVE" : "EXPIRED";
+  return exp > now ? "ACTIVE" : "EXPIRED";
 });
 
-// Unified Days Remaining Output
+// Unified Days Remaining Output (24-hour periods elapsed)
 MembSchema.virtual("daysRemaining").get(function () {
   if (!this.expiryDate) return "Expired";
   const now = new Date();
   const exp = new Date(this.expiryDate);
 
-  const todayStart = new Date(Date.UTC(now.getFullYear(), now.getMonth(), now.getDate()));
-  const expStart = new Date(Date.UTC(exp.getUTCFullYear(), exp.getUTCMonth(), exp.getUTCDate()));
+  const diffMs = exp.getTime() - now.getTime();
+  const diffDays = Math.ceil(diffMs / (1000 * 60 * 60 * 24));
 
-  const diffMs = expStart.getTime() - todayStart.getTime();
-  const diffDays = Math.round(diffMs / (1000 * 60 * 60 * 24));
-
-  if (diffDays > 0) {
+  if (diffMs > 0) {
     return `${diffDays} day${diffDays === 1 ? "" : "s"} remaining`;
-  } else if (diffDays === 0) {
-    return "Expired today";
   } else {
-    const absDays = Math.abs(diffDays);
+    const absDays = Math.abs(Math.floor(diffMs / (1000 * 60 * 60 * 24)));
+    if (absDays === 0) return "Expired today";
     return `Expired ${absDays} day${absDays === 1 ? "" : "s"} ago`;
   }
 });

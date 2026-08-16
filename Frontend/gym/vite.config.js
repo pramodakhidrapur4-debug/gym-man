@@ -12,8 +12,8 @@ export default defineConfig({
       registerType: 'autoUpdate',
       includeAssets: ['favicon.ico', 'apple-touch-icon-180x180.png'],
       manifest: {
-        name: 'POWER HOUSE MULTI GYM',
-        short_name: 'PowerHouse',
+        name: 'POWER HOUSE',
+        short_name: 'Power House',
         description: 'Private owner management dashboard for members, memberships, payments, and expiry calculations.',
         theme_color: '#000000',
         background_color: '#000000',
