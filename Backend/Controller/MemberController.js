@@ -48,7 +48,7 @@ const calculateExpiryDate = (startDateStr, durationDaysInput) => {
 // @access  Private (Owner JWT)
 export const createMember = async (req, res) => {
   try {
-    const { name, email, contact, picture, startDate, duration, totalAmount, paidAmount } = req.body;
+    const { name, contact, picture, startDate, duration, totalAmount, paidAmount } = req.body;
 
     // 1. Input Validation
     if (!name || !contact || !startDate || !duration || totalAmount === undefined || paidAmount === undefined) {
@@ -58,15 +58,7 @@ export const createMember = async (req, res) => {
       });
     }
 
-    if (email && email.trim() !== "") {
-      const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-      if (!emailRegex.test(email.trim())) {
-        return res.status(400).json({
-          success: false,
-          message: "Please provide a valid email address.",
-        });
-      }
-    }
+ 
 
     const total = Number(totalAmount);
     const paid = Number(paidAmount);
@@ -114,7 +106,6 @@ export const createMember = async (req, res) => {
     // 4. Save to MongoDB
     const newMember = new Member({
       name: name.trim(),
-      email: email ? email.trim().toLowerCase() : "",
       contact: String(contact).trim(),
       picture: imageUrl,
       cloudinaryPublicId,
@@ -165,13 +156,12 @@ export const getAllMembers = async (req, res) => {
       query.paymentStatus = "PENDING";
     }
 
-    // Case-insensitive search on name, email, or contact
+    // Case-insensitive search on name or contact
     if (search && search.trim()) {
       const cleanSearch = search.trim();
       const searchRegex = new RegExp(cleanSearch.replace(/[-[\]{}()*+?.,\\^$|#\s]/g, '\\$&'), "i");
       query.$or = [
         { name: searchRegex },
-        { email: searchRegex },
         { contact: searchRegex },
       ];
     }
@@ -257,7 +247,7 @@ export const updateMember = async (req, res) => {
       });
     }
 
-    const { name, email, contact, picture, startDate, duration, totalAmount, paidAmount } = req.body;
+    const { name, contact, picture, startDate, duration, totalAmount, paidAmount } = req.body;
 
     if (totalAmount !== undefined) {
       if (isNaN(Number(totalAmount)) || Number(totalAmount) < 0) {
@@ -288,7 +278,7 @@ export const updateMember = async (req, res) => {
     }
 
     if (name) member.name = name.trim();
-    if (email !== undefined) member.email = email ? email.trim().toLowerCase() : "";
+    
     if (contact) member.contact = String(contact).trim();
 
     member.totalAmount = targetTotal;

@@ -3,7 +3,6 @@ import mongoose from "mongoose";
 const MembSchema = new mongoose.Schema(
   {
     name: { type: String, required: true, trim: true },
-    email: { type: String, trim: true, lowercase: true, default: "" },
     contact: { type: String, required: true, trim: true },
     picture: {
       type: String,
@@ -79,3 +78,4 @@ MembSchema.pre("save", function (next) {
 const Member = mongoose.models.Member || mongoose.model("Member", MembSchema);
 
 export default Member;
+

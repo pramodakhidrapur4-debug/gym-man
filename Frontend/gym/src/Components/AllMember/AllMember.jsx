@@ -86,7 +86,6 @@ const AllMember = ({ initialFilter = "all", onMemberUpdated }) => {
     if (editPhotoPreview) return true;
     return (
       editingMember.name !== initialEditState.name ||
-      editingMember.email !== initialEditState.email ||
       editingMember.contact !== initialEditState.contact ||
       editingMember.startDate !== initialEditState.startDate ||
       editingMember.totalAmountInput !== initialEditState.totalAmountInput ||
@@ -258,7 +257,6 @@ const AllMember = ({ initialFilter = "all", onMemberUpdated }) => {
 
       const payload = {
         name: editingMember.name.trim(),
-        email: editingMember.email.trim(),
         contact: editingMember.contact.trim(),
         startDate: editingMember.startDate,
         // Zero-pad the duration to bypass the old Render backend bug where "1" evaluates to 30 days
@@ -448,7 +446,7 @@ const AllMember = ({ initialFilter = "all", onMemberUpdated }) => {
           </span>
           <input
             type="text"
-            placeholder="Search by name, email or phone..."
+            placeholder="Search by name or phone..."
             value={searchInput}
             onChange={handleSearchChange}
           />
@@ -541,7 +539,6 @@ const AllMember = ({ initialFilter = "all", onMemberUpdated }) => {
                       </div>
                       <div className="member-info-text">
                         <strong className="member-name-link">{m.name}</strong>
-                        <small>{m.email}</small>
                       </div>
                     </td>
                     <td onClick={() => setViewingMember(m)}>{m.contact}</td>
@@ -668,7 +665,7 @@ const AllMember = ({ initialFilter = "all", onMemberUpdated }) => {
                 <span className="zoom-hint-badge">🔍 Click for Fullscreen</span>
               </div>
               <h2 className="profile-prominent-name">{viewingMember.name}</h2>
-              <p className="profile-prominent-contact">📞 {viewingMember.contact} | 📧 {viewingMember.email}</p>
+              <p className="profile-prominent-contact">📞 {viewingMember.contact}</p>
             </div>
 
             <div className="details-sections-container">
@@ -870,7 +867,7 @@ const AllMember = ({ initialFilter = "all", onMemberUpdated }) => {
               </div>
               <div className="header-text-block">
                 <h2>{editingMember.name || "Edit Member"}</h2>
-                <p className="header-sub-email">{editingMember.email || editingMember.contact}</p>
+                <p className="header-sub-email">{editingMember.contact}</p>
                 <span className="header-update-tag">Update member profile & subscription</span>
               </div>
               <button type="button" onClick={attemptCloseEditModal} className="redesign-close-btn" aria-label="Close edit modal">✕</button>
@@ -890,14 +887,6 @@ const AllMember = ({ initialFilter = "all", onMemberUpdated }) => {
                       <div className="input-with-icon">
                         <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" className="input-icon"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path><circle cx="12" cy="7" r="4"></circle></svg>
                         <input type="text" value={editingMember.name} onChange={(e) => setEditingMember({ ...editingMember, name: e.target.value })} required />
-                      </div>
-                    </div>
-
-                    <div className="custom-input-group">
-                      <label>EMAIL ADDRESS</label>
-                      <div className="input-with-icon">
-                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" className="input-icon"><path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"></path><polyline points="22,6 12,13 2,6"></polyline></svg>
-                        <input type="email" value={editingMember.email} onChange={(e) => setEditingMember({ ...editingMember, email: e.target.value })} />
                       </div>
                     </div>
 

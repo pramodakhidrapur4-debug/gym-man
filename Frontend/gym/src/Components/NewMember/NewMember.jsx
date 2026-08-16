@@ -8,7 +8,7 @@ const NewMember = ({ onMemberAdded }) => {
 
   const [formData, setFormData] = useState({
     name: "",
-    email: "",
+  
     contact: "",
     startDate: todayStr,
     duration: "30", // Duration in DAYS as controlled string
@@ -276,13 +276,7 @@ const NewMember = ({ onMemberAdded }) => {
       return;
     }
 
-    if (formData.email.trim() !== "") {
-      const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-      if (!emailRegex.test(formData.email.trim())) {
-        setMessage({ type: "error", text: "Please provide a valid email address." });
-        return;
-      }
-    }
+  
 
     const durationDays = parseInt(formData.duration, 10);
     if (isNaN(durationDays) || durationDays <= 0) {
@@ -321,7 +315,7 @@ const NewMember = ({ onMemberAdded }) => {
         credentials: "include",
         body: JSON.stringify({
           name: formData.name.trim(),
-          email: formData.email.trim(),
+         
           contact: formData.contact.trim(),
           startDate: formData.startDate,
           // Zero-pad the duration to bypass the old Render backend bug where "1" evaluates to 30 days
@@ -349,7 +343,6 @@ const NewMember = ({ onMemberAdded }) => {
 
       setFormData({
         name: "",
-        email: "",
         contact: "",
         startDate: todayStr,
         duration: "30",
@@ -394,16 +387,7 @@ const NewMember = ({ onMemberAdded }) => {
             />
           </div>
 
-          <div className="form-group">
-            <label>Email Address</label>
-            <input
-              type="email"
-              name="email"
-              placeholder="e.g. rahul@example.com (Optional)"
-              value={formData.email}
-              onChange={handleInputChange}
-            />
-          </div>
+      
 
           <div className="form-group">
             <label>Phone Contact *</label>
