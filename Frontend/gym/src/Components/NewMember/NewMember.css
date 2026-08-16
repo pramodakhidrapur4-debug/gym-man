@@ -413,8 +413,10 @@
   right: 1.5rem;
 }
 
-.cancel-camera-btn:hover, .flip-camera-btn:hover {
-  background: rgba(255, 255, 255, 0.25);
+@media (hover: hover) and (pointer: fine) {
+  .cancel-camera-btn:hover, .flip-camera-btn:hover {
+    background: rgba(255, 255, 255, 0.25);
+  }
 }
 
 .capture-camera-btn {
@@ -431,9 +433,11 @@
   padding: 0;
 }
 
-.capture-camera-btn:hover {
-  background: rgba(255, 255, 255, 0.4);
-  transform: scale(1.05);
+@media (hover: hover) and (pointer: fine) {
+  .capture-camera-btn:hover {
+    background: rgba(255, 255, 255, 0.4);
+    transform: scale(1.05);
+  }
 }
 
 .capture-camera-btn:active .capture-inner-circle {

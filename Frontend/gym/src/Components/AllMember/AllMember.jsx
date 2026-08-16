@@ -518,7 +518,7 @@ const AllMember = ({ initialFilter = "all", onMemberUpdated }) => {
                 </tr>
               </thead>
               <tbody>
-                {useMemo(() => members.map((m) => {
+                {members.map((m) => {
                   const { status: memStatus, text: memDaysText } = getMembershipStatus(m.expiryDate);
                   return (
                   <tr key={m._id} className="clickable-row">
@@ -574,14 +574,14 @@ const AllMember = ({ initialFilter = "all", onMemberUpdated }) => {
                     </td>
                   </tr>
                   );
-                }), [members, openEditModal])}
+                })}
               </tbody>
             </table>
           </div>
 
           {/* Mobile Responsive Cards View */}
           <div className="mobile-cards-container">
-            {useMemo(() => members.map((m) => {
+            {members.map((m) => {
               const { status: memStatus, text: memDaysText } = getMembershipStatus(m.expiryDate);
               return (
               <div className="mobile-member-card" key={m._id} onClick={() => setViewingMember(m)}>
@@ -637,7 +637,7 @@ const AllMember = ({ initialFilter = "all", onMemberUpdated }) => {
                 </div>
               </div>
               );
-            }), [members, openEditModal])}
+            })}
           </div>
 
           {/* Pagination Controls */}
