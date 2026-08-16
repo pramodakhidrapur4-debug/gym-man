@@ -51,10 +51,10 @@ export const createMember = async (req, res) => {
     const { name, email, contact, picture, startDate, duration, totalAmount, paidAmount } = req.body;
 
     // 1. Input Validation
-    if (!name || !contact) {
+    if (!name || !contact || !startDate || !duration || totalAmount === undefined || paidAmount === undefined) {
       return res.status(400).json({
         success: false,
-        message: "Please fill in all required fields (Name and Phone Contact).",
+        message: "Please fill in all required fields (Name, Phone, Start Date, Duration, Total Fee, Paid Amount).",
       });
     }
 

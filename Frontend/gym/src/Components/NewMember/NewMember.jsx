@@ -271,8 +271,8 @@ const NewMember = ({ onMemberAdded }) => {
       return;
     }
 
-    if (!formData.name.trim() || !formData.contact.trim()) {
-      setMessage({ type: "error", text: "Please fill in all required fields (Name and Phone Contact)." });
+    if (!formData.name.trim() || !formData.contact.trim() || !formData.startDate || !formData.duration || formData.totalAmount === "" || formData.paidAmount === "") {
+      setMessage({ type: "error", text: "Please fill in all required fields (Name, Phone, Start Date, Duration, Total Fee, Paid Amount)." });
       return;
     }
 
