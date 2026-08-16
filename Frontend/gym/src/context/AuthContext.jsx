@@ -2,7 +2,7 @@ import React, { createContext, useContext, useState, useEffect } from "react";
 
 const AuthContext = createContext();
 
-const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || "https://gym-man-backend.onrender.com";
+import { API_BASE_URL } from "../config";
 
 export const AuthProvider = ({ children }) => {
   const [user, setUser] = useState(null);

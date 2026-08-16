@@ -1,6 +1,7 @@
 import React, { useState, useEffect, useRef } from "react";
 import "./NewMember.css";
 import { useAuth } from "../../context/AuthContext";
+import { API_BASE_URL } from "../../config";
 
 const NewMember = ({ onMemberAdded }) => {
   const todayStr = new Date().toISOString().split("T")[0];
@@ -270,8 +271,8 @@ const NewMember = ({ onMemberAdded }) => {
       return;
     }
 
-    if (!formData.name.trim() || !formData.email.trim() || !formData.contact.trim()) {
-      setMessage({ type: "error", text: "Please fill in all required fields (Name, Email, Phone Contact)." });
+    if (!formData.name.trim() || !formData.contact.trim()) {
+      setMessage({ type: "error", text: "Please fill in all required fields (Name, Phone Contact)." });
       return;
     }
 
@@ -306,7 +307,6 @@ const NewMember = ({ onMemberAdded }) => {
       const storedToken = token || localStorage.getItem("gym_owner_token");
       if (storedToken) headers["Authorization"] = `Bearer ${storedToken}`;
 
-      const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || "https://gym-man-backend.onrender.com";
       const response = await fetch(`${API_BASE_URL}/api/members`, {
         method: "POST",
         headers,
@@ -559,7 +559,7 @@ const NewMember = ({ onMemberAdded }) => {
                 <button type="button" className="capture-camera-btn" onClick={capturePhoto}>
                   <div className="capture-inner-circle"></div>
                 </button>
-                <button type="button" className="flip-camera-btn" onClick={flipCamera} style={{ background: 'rgba(0,0,0,0.5)', border: '1px solid white', color: 'white', borderRadius: '4px', padding: '8px 12px', cursor: 'pointer' }}>
+                <button type="button" className="flip-camera-btn" onClick={flipCamera}>
                   🔄 Flip
                 </button>
               </div>

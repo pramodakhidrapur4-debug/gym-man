@@ -387,7 +387,7 @@
   gap: 2rem;
 }
 
-.cancel-camera-btn {
+.cancel-camera-btn, .flip-camera-btn {
   background: rgba(255, 255, 255, 0.15);
   backdrop-filter: blur(4px);
   color: #fff;
@@ -398,10 +398,18 @@
   cursor: pointer;
   transition: all 0.2s;
   position: absolute;
+  z-index: 10;
+}
+
+.cancel-camera-btn {
   left: 1.5rem;
 }
 
-.cancel-camera-btn:hover {
+.flip-camera-btn {
+  right: 1.5rem;
+}
+
+.cancel-camera-btn:hover, .flip-camera-btn:hover {
   background: rgba(255, 255, 255, 0.25);
 }
 

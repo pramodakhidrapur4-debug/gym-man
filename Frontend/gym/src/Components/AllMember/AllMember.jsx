@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from "react";
 import "./AllMember.css";
 import { useAuth } from "../../context/AuthContext";
+import { API_BASE_URL } from "../../config";
 
 const AllMember = ({ initialFilter = "all", onMemberUpdated }) => {
   const [members, setMembers] = useState([]);
@@ -133,7 +134,6 @@ const AllMember = ({ initialFilter = "all", onMemberUpdated }) => {
       const storedToken = token || localStorage.getItem("gym_owner_token");
       if (storedToken) headers["Authorization"] = `Bearer ${storedToken}`;
 
-      const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || "https://gym-man-backend.onrender.com";
       let url = `${API_BASE_URL}/api/members`;
       const params = new URLSearchParams();
       params.append("page", page);
@@ -158,6 +158,7 @@ const AllMember = ({ initialFilter = "all", onMemberUpdated }) => {
       }
     } catch (err) {
       console.error("Fetch members error:", err);
+      showToast("Failed to fetch members. Please check your connection.");
     } finally {
       setLoading(false);
     }
@@ -198,7 +199,6 @@ const AllMember = ({ initialFilter = "all", onMemberUpdated }) => {
       const storedToken = token || localStorage.getItem("gym_owner_token");
       if (storedToken) headers["Authorization"] = `Bearer ${storedToken}`;
 
-      const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || "https://gym-man-backend.onrender.com";
       const response = await fetch(`${API_BASE_URL}/api/members/${id}`, {
         method: "DELETE",
         headers,
@@ -271,7 +271,6 @@ const AllMember = ({ initialFilter = "all", onMemberUpdated }) => {
         payload.picture = editPhotoPreview;
       }
 
-      const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || "https://gym-man-backend.onrender.com";
       const response = await fetch(`${API_BASE_URL}/api/members/${editingMember._id}`, {
         method: "PUT",
         headers,
@@ -317,7 +316,6 @@ const AllMember = ({ initialFilter = "all", onMemberUpdated }) => {
       const storedToken = token || localStorage.getItem("gym_owner_token");
       if (storedToken) headers["Authorization"] = `Bearer ${storedToken}`;
 
-      const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || "https://gym-man-backend.onrender.com";
       const response = await fetch(`${API_BASE_URL}/api/members/${paymentModalMember._id}`, {
         method: "PUT",
         headers,

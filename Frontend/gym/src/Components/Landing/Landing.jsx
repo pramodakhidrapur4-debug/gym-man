@@ -3,6 +3,7 @@ import "./Landing.css";
 import AllMember from "../AllMember/AllMember";
 import NewMember from "../NewMember/NewMember";
 import { useAuth } from "../../context/AuthContext";
+import { API_BASE_URL } from "../../config";
 import { useNavigate } from "react-router-dom";
 
 const Landing = () => {
@@ -37,7 +38,6 @@ const Landing = () => {
       const storedToken = token || localStorage.getItem("gym_owner_token");
       if (storedToken) headers["Authorization"] = `Bearer ${storedToken}`;
 
-      const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || "https://gym-man-backend.onrender.com";
       const response = await fetch(`${API_BASE_URL}/api/dashboard`, {
         method: "GET",
         headers,
