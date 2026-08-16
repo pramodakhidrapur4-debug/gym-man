@@ -1,1 +1,1 @@
-export const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || "https://gym-man-backend.onrender.com";
+export const API_BASE_URL = import.meta.env.VITE_API_URL || "https://gym-man-backend.onrender.com";
