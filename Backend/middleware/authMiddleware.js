@@ -16,6 +16,11 @@ const parseCookies = (cookieHeader) => {
 
 // Reusable authenticateOwner middleware
 export const authenticateOwner = async (req, res, next) => {
+  // Pass through OPTIONS requests for CORS preflight
+  if (req.method === "OPTIONS") {
+    return next();
+  }
+
   try {
     let token;
 

@@ -45,7 +45,7 @@ app.use('/api', limiter);
 // Dynamic & Credentialed CORS Configuration
 const allowedOrigins = [
   process.env.CLIENT_URL,
-  "https://gym-mwb10o7wm-rasulallaattar-3062s-projects.vercel.app",
+  "https://gym-man-six.vercel.app",
   "http://localhost:5174",
   "http://localhost:5173",
   "http://localhost:3000",
@@ -72,7 +72,7 @@ app.use(
       return callback(new Error('Not allowed by CORS'));
     },
     credentials: true,
-    methods: ["GET", "POST", "PUT", "DELETE", "OPTIONS"],
+    methods: ["GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS"],
     allowedHeaders: ["Content-Type", "Authorization", "X-Requested-With", "Accept"],
   })
 );
