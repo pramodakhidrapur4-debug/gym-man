@@ -58,6 +58,16 @@ export const createMember = async (req, res) => {
       });
     }
 
+    if (email && email.trim() !== "") {
+      const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+      if (!emailRegex.test(email.trim())) {
+        return res.status(400).json({
+          success: false,
+          message: "Please provide a valid email address.",
+        });
+      }
+    }
+
     const total = Number(totalAmount);
     const paid = Number(paidAmount);
 

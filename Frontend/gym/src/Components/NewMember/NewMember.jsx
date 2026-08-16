@@ -276,6 +276,14 @@ const NewMember = ({ onMemberAdded }) => {
       return;
     }
 
+    if (formData.email.trim() !== "") {
+      const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+      if (!emailRegex.test(formData.email.trim())) {
+        setMessage({ type: "error", text: "Please provide a valid email address." });
+        return;
+      }
+    }
+
     const durationDays = parseInt(formData.duration, 10);
     if (isNaN(durationDays) || durationDays <= 0) {
       setMessage({ type: "error", text: "Duration must be a positive number of days." });
