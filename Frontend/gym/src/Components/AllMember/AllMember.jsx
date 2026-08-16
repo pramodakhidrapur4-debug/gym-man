@@ -354,19 +354,18 @@ const AllMember = ({ initialFilter = "all", onMemberUpdated }) => {
     if (!expiryDate) return { status: "EXPIRED", text: "Expired" };
     
     const now = new Date();
-    const todayStart = new Date(Date.UTC(now.getFullYear(), now.getMonth(), now.getDate()));
     const exp = new Date(expiryDate);
-    const expStart = new Date(Date.UTC(exp.getUTCFullYear(), exp.getUTCMonth(), exp.getUTCDate()));
     
-    const diffMs = expStart.getTime() - todayStart.getTime();
-    const diffDays = Math.round(diffMs / (1000 * 60 * 60 * 24));
+    const diffMs = exp.getTime() - now.getTime();
     
-    if (diffDays > 0) {
+    if (diffMs > 0) {
+      const diffDays = Math.ceil(diffMs / (1000 * 60 * 60 * 24));
       return { status: "ACTIVE", text: `${diffDays} day${diffDays === 1 ? "" : "s"} remaining` };
-    } else if (diffDays === 0) {
-      return { status: "EXPIRED", text: "Expired today" };
     } else {
-      const absDays = Math.abs(diffDays);
+      const absDays = Math.floor(Math.abs(diffMs) / (1000 * 60 * 60 * 24));
+      if (absDays === 0) {
+        return { status: "EXPIRED", text: "Expired today" };
+      }
       return { status: "EXPIRED", text: `Expired ${absDays} day${absDays === 1 ? "" : "s"} ago` };
     }
   };

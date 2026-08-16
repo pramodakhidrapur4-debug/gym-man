@@ -141,15 +141,13 @@ export const getAllMembers = async (req, res) => {
     const { search, filter, page = 1, limit = 10 } = req.query;
     let query = {};
 
-    // Standardized start of current day for consistent date filter boundaries
     const now = new Date();
-    const todayStart = new Date(Date.UTC(now.getFullYear(), now.getMonth(), now.getDate()));
 
     // Backend-derived status filtering
     if (filter === "active") {
-      query.expiryDate = { $gt: todayStart };
+      query.expiryDate = { $gt: now };
     } else if (filter === "expired") {
-      query.expiryDate = { $lte: todayStart };
+      query.expiryDate = { $lte: now };
     } else if (filter === "paid") {
       query.paymentStatus = "PAID";
     } else if (filter === "pending") {

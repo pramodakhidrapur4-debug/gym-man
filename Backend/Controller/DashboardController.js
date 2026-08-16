@@ -8,8 +8,8 @@ export const getDashboardData = async (req, res) => {
     const now = new Date();
 
     const totalMembers = await Member.countDocuments();
-    const activeMembers = await Member.countDocuments({ expiryDate: { $gte: now } });
-    const expiredMembers = await Member.countDocuments({ expiryDate: { $lt: now } });
+    const activeMembers = await Member.countDocuments({ expiryDate: { $gt: now } });
+    const expiredMembers = await Member.countDocuments({ expiryDate: { $lte: now } });
     const fullyPaidMembers = await Member.countDocuments({ pendingAmount: 0 });
     const pendingMembers = await Member.countDocuments({ pendingAmount: { $gt: 0 } });
 
