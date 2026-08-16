@@ -27,6 +27,8 @@ const NewMember = ({ onMemberAdded }) => {
   const [cameraFacingMode, setCameraFacingMode] = useState("user");
   const videoRef = useRef(null);
   const streamRef = useRef(null);
+  const isCameraInitializing = useRef(false);
+  const pendingFlipMode = useRef(null);
 
   const { token } = useAuth();
 
@@ -144,7 +146,25 @@ const NewMember = ({ onMemberAdded }) => {
 
     setIsCameraOpen(true);
     setCameraFacingMode(facingMode);
+
+    // Prevent concurrent initialization race conditions
+    if (isCameraInitializing.current) {
+      pendingFlipMode.current = facingMode;
+      return;
+    }
+
+    isCameraInitializing.current = true;
+
     try {
+      // Safely stop existing tracks before requesting a new camera
+      if (streamRef.current) {
+        streamRef.current.getTracks().forEach(track => track.stop());
+        streamRef.current = null;
+      }
+      if (videoRef.current) {
+        videoRef.current.srcObject = null;
+      }
+
       const stream = await navigator.mediaDevices.getUserMedia({ video: { facingMode } });
       streamRef.current = stream;
       if (videoRef.current) {
@@ -154,6 +174,14 @@ const NewMember = ({ onMemberAdded }) => {
       console.error("Error accessing camera:", err);
       setMessage({ type: "error", text: "Could not access camera. Please check permissions." });
       setIsCameraOpen(false);
+    } finally {
+      isCameraInitializing.current = false;
+      // If a flip was requested while initializing, process the queued flip now
+      if (pendingFlipMode.current) {
+        const nextMode = pendingFlipMode.current;
+        pendingFlipMode.current = null;
+        startCamera(nextMode);
+      }
     }
   };
 
@@ -162,15 +190,20 @@ const NewMember = ({ onMemberAdded }) => {
       streamRef.current.getTracks().forEach(track => track.stop());
       streamRef.current = null;
     }
+    if (videoRef.current) {
+      videoRef.current.srcObject = null;
+    }
+    pendingFlipMode.current = null;
+    isCameraInitializing.current = false;
     setIsCameraOpen(false);
   };
 
-  const flipCamera = async () => {
-    const newMode = cameraFacingMode === "user" ? "environment" : "user";
-    if (streamRef.current) {
-      streamRef.current.getTracks().forEach(track => track.stop());
-    }
-    await startCamera(newMode);
+  const flipCamera = () => {
+    // Read the current state or the queued state to determine next mode safely
+    const currentMode = pendingFlipMode.current || cameraFacingMode;
+    const newMode = currentMode === "user" ? "environment" : "user";
+    
+    startCamera(newMode);
   };
 
   const capturePhoto = () => {
