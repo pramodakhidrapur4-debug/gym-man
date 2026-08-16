@@ -272,7 +272,7 @@ const NewMember = ({ onMemberAdded }) => {
     }
 
     if (!formData.name.trim() || !formData.contact.trim()) {
-      setMessage({ type: "error", text: "Please fill in all required fields (Name, Phone Contact)." });
+      setMessage({ type: "error", text: "Please fill in all required fields (Name and Phone Contact)." });
       return;
     }
 

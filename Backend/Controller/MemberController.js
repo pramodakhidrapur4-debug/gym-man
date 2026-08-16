@@ -54,7 +54,7 @@ export const createMember = async (req, res) => {
     if (!name || !contact) {
       return res.status(400).json({
         success: false,
-        message: "Please fill in all required fields (Name, Phone Contact).",
+        message: "Please fill in all required fields (Name and Phone Contact).",
       });
     }
 
