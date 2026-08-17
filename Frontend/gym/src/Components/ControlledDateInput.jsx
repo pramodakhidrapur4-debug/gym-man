@@ -41,17 +41,17 @@ const ControlledDateInput = ({ value, onChange, required, name, className }) => 
         readOnly
         placeholder="DD-MM-YYYY"
         required={required}
+        onClick={handleContainerClick}
         style={{
           width: '100%',
           cursor: 'pointer',
-          // Prevent the text input from blocking clicks if someone manages to click it
-          pointerEvents: 'none'
+          backgroundColor: 'transparent'
         }}
       />
       {/* 
-        Native date input is positioned absolutely over the text input and made invisible. 
-        This captures clicks natively to open the date picker reliably across all mobile/desktop browsers 
-        without changing the visible format. 
+        Native date input is pushed far off-screen. 
+        It is triggered programmatically via .showPicker().
+        This ensures Android Chrome never displays its own DD/MM/YYYY format over our text.
       */}
       <input
         type="date"
@@ -62,23 +62,19 @@ const ControlledDateInput = ({ value, onChange, required, name, className }) => 
         required={required}
         style={{
           position: 'absolute',
-          top: 0,
-          left: 0,
-          width: '100%',
-          height: '100%',
+          left: '-9999px',
+          top: '-9999px',
           opacity: 0,
-          cursor: 'pointer',
-          zIndex: 2,
-          padding: 0,
-          margin: 0,
-          boxSizing: 'border-box'
+          pointerEvents: 'none'
         }}
       />
-      <span style={{ 
+      <span 
+        onClick={handleContainerClick}
+        style={{ 
         position: 'absolute', 
         right: '12px', 
         zIndex: 1, 
-        pointerEvents: 'none',
+        cursor: 'pointer',
         color: '#8d97a5',
         fontSize: '1rem'
       }}>
