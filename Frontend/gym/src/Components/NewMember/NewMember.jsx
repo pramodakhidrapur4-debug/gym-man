@@ -3,6 +3,7 @@ import "./NewMember.css";
 import { useAuth } from "../../context/AuthContext";
 import { API_BASE_URL } from "../../config";
 import { formatDisplayDate } from "../../utils/dateUtils";
+import ControlledDateInput from "../ControlledDateInput";
 
 const NewMember = ({ onMemberAdded }) => {
   const todayStr = new Date().toISOString().split("T")[0];
@@ -508,12 +509,11 @@ const NewMember = ({ onMemberAdded }) => {
 
           <div className="form-group">
             <label>Start Date *</label>
-            <input
-              type="date"
+            <ControlledDateInput
               name="startDate"
               value={formData.startDate}
               onChange={handleInputChange}
-              required
+              required={true}
             />
           </div>
 

@@ -4,6 +4,7 @@ import Home from "./Home/Home";
 import Dashboard from "./Dashboard/Dashboard";
 import ProtectedRoute from "./Components/ProtectedRoute";
 import { AuthProvider, useAuth } from "./context/AuthContext";
+import ReloadPrompt from "./Components/ReloadPrompt/ReloadPrompt";
 
 // HomeRedirect component to handle root '/' routing safely
 const HomeRedirect = () => {
@@ -77,6 +78,7 @@ const App = () => {
           />
           <Route path="*" element={<Navigate to="/" replace />} />
         </Routes>
+        <ReloadPrompt />
       </Router>
     </AuthProvider>
   );
