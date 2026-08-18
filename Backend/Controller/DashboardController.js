@@ -46,8 +46,7 @@ export const getDashboardData = async (req, res) => {
     console.error("Error fetching dashboard statistics:", error);
     return res.status(500).json({
       success: false,
-      message: "Unable to load dashboard statistics from MongoDB",
-      error: error.message,
+      message: "Server error while calculating dashboard statistics.",
     });
   }
 };

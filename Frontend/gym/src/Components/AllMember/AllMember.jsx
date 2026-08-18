@@ -5,6 +5,28 @@ import { API_BASE_URL } from "../../config";
 import { formatDisplayDate } from "../../utils/dateUtils";
 import ControlledDateInput from "../ControlledDateInput";
 
+const SelectAllCheckbox = ({ allSelected, someSelected, onChange }) => {
+  const checkboxRef = React.useRef(null);
+  React.useEffect(() => {
+    if (checkboxRef.current) {
+      checkboxRef.current.indeterminate = someSelected;
+    }
+  }, [someSelected]);
+
+  return (
+    <div className="checkbox-touch-target" onClick={(e) => e.stopPropagation()}>
+      <input 
+        type="checkbox" 
+        className="custom-checkbox"
+        ref={checkboxRef}
+        checked={allSelected} 
+        onChange={onChange} 
+        aria-label="Select all visible members"
+      />
+    </div>
+  );
+};
+
 const AllMember = ({ initialFilter = "all", onMemberUpdated }) => {
   const [members, setMembers] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -24,7 +46,13 @@ const AllMember = ({ initialFilter = "all", onMemberUpdated }) => {
   const [paymentModalMember, setPaymentModalMember] = useState(null);
   const [lightboxImage, setLightboxImage] = useState(null);
   const [selectedMembers, setSelectedMembers] = useState([]);
+  const [isSelectionMode, setIsSelectionMode] = useState(false);
   const [bulkDeleteConfirm, setBulkDeleteConfirm] = useState(false);
+  
+  // Touch Handlers for Long Press
+  const timerRef = React.useRef(null);
+  const isLongPressRef = React.useRef(false);
+  const touchPosRef = React.useRef({ x: 0, y: 0 });
 
   // Feedback & Toast state
   const [addPaymentAmount, setAddPaymentAmount] = useState("");
@@ -173,7 +201,6 @@ const AllMember = ({ initialFilter = "all", onMemberUpdated }) => {
   };
 
   useEffect(() => {
-    setSelectedMembers([]); // clear selection on filter/search/page change
     fetchMembers();
   }, [filter, search, page]);
 
@@ -200,11 +227,19 @@ const AllMember = ({ initialFilter = "all", onMemberUpdated }) => {
     setPage(1);
   };
 
-  const handleSelectAll = (e) => {
-    if (e.target.checked) {
-      setSelectedMembers(members.map((m) => m._id));
+  const handleSelectAllVisible = () => {
+    if (members.length === 0) return;
+    const visibleIds = members.map((m) => m._id);
+    const allVisibleSelected = visibleIds.every((id) => selectedMembers.includes(id));
+    
+    if (allVisibleSelected) {
+      setSelectedMembers((prev) => prev.filter((id) => !visibleIds.includes(id)));
     } else {
-      setSelectedMembers([]);
+      setSelectedMembers((prev) => {
+        const newSet = new Set(prev);
+        visibleIds.forEach((id) => newSet.add(id));
+        return Array.from(newSet);
+      });
     }
   };
 
@@ -213,6 +248,61 @@ const AllMember = ({ initialFilter = "all", onMemberUpdated }) => {
       prev.includes(id) ? prev.filter((item) => item !== id) : [...prev, id]
     );
   };
+
+  const cancelSelectionMode = () => {
+    setIsSelectionMode(false);
+    setSelectedMembers([]);
+  };
+
+  // ----------------------------------------------------
+  // Long-Press Implementation
+  // ----------------------------------------------------
+  const startPress = (e, member) => {
+    if (isSelectionMode) return;
+    isLongPressRef.current = false;
+    touchPosRef.current = { x: e.clientX, y: e.clientY };
+    timerRef.current = setTimeout(() => {
+      isLongPressRef.current = true;
+      if (window.navigator && window.navigator.vibrate) {
+        window.navigator.vibrate(50);
+      }
+      setIsSelectionMode(true);
+      setSelectedMembers([member._id]);
+    }, 700);
+  };
+
+  const cancelPress = () => {
+    if (timerRef.current) {
+      clearTimeout(timerRef.current);
+      timerRef.current = null;
+    }
+  };
+
+  const onPointerMove = (e) => {
+    if (!timerRef.current) return;
+    const dx = Math.abs(e.clientX - touchPosRef.current.x);
+    const dy = Math.abs(e.clientY - touchPosRef.current.y);
+    if (dx > 15 || dy > 15) {
+      cancelPress();
+    }
+  };
+
+  const handleRowClick = (e, member) => {
+    if (isSelectionMode) {
+      // In selection mode, tapping anywhere on row toggles selection
+      e.preventDefault();
+      handleSelectMember(member._id);
+      return;
+    }
+    if (isLongPressRef.current) {
+      // If a long press just finished, don't trigger the click
+      e.preventDefault();
+      isLongPressRef.current = false;
+      return;
+    }
+    setViewingMember(member);
+  };
+  // ----------------------------------------------------
 
   const handleBulkDelete = async () => {
     if (selectedMembers.length === 0) return;
@@ -235,7 +325,7 @@ const AllMember = ({ initialFilter = "all", onMemberUpdated }) => {
       if (response.ok && data.success) {
         showToast(`${data.deletedCount} members permanently removed`);
         setBulkDeleteConfirm(false);
-        setSelectedMembers([]);
+        cancelSelectionMode();
         fetchMembers();
         if (onMemberUpdated) onMemberUpdated();
       } else {
@@ -528,20 +618,46 @@ const AllMember = ({ initialFilter = "all", onMemberUpdated }) => {
           <button className={`filter-pill ${filter === "expired" ? "active" : ""}`} onClick={() => handleFilterChange("expired")}>Expired</button>
           <button className={`filter-pill ${filter === "paid" ? "active" : ""}`} onClick={() => handleFilterChange("paid")}>Paid</button>
           <button className={`filter-pill ${filter === "pending" ? "active" : ""}`} onClick={() => handleFilterChange("pending")}>Pending</button>
+          
+          <button 
+            className={`filter-pill select-toggle-btn ${isSelectionMode ? "active" : ""}`} 
+            onClick={() => {
+              if (isSelectionMode) {
+                cancelSelectionMode();
+              } else {
+                setIsSelectionMode(true);
+              }
+            }}
+            title="Toggle Selection Mode"
+          >
+            {isSelectionMode ? "Cancel Select" : "Select"}
+          </button>
         </div>
       </div>
 
       {/* Bulk Actions Bar */}
-      {selectedMembers.length > 0 && (
+      {isSelectionMode && (
         <div className="bulk-actions-bar">
-          <span className="bulk-selected-text">{selectedMembers.length} Members Selected</span>
-          <button 
-            className="bulk-delete-btn" 
-            onClick={() => setBulkDeleteConfirm(true)}
-            disabled={actionLoading}
-          >
-            Delete Selected
-          </button>
+          <div className="bulk-actions-left">
+            <button className="cancel-selection-btn" onClick={cancelSelectionMode}>
+              Clear
+            </button>
+            <button className="select-all-btn" onClick={handleSelectAllVisible}>
+              {members.length > 0 && members.every((m) => selectedMembers.includes(m._id)) ? "Unselect Visible" : "Select All"}
+            </button>
+            <span className="bulk-selected-text">
+              {selectedMembers.length} Selected
+            </span>
+          </div>
+          {selectedMembers.length > 0 && (
+            <button 
+              className="bulk-delete-btn" 
+              onClick={() => setBulkDeleteConfirm(true)}
+              disabled={actionLoading}
+            >
+              Delete Selected
+            </button>
+          )}
         </div>
       )}
 
@@ -575,13 +691,15 @@ const AllMember = ({ initialFilter = "all", onMemberUpdated }) => {
             <table className="members-table">
               <thead>
                 <tr>
-                  <th className="checkbox-cell">
-                    <input 
-                      type="checkbox" 
-                      onChange={handleSelectAll} 
-                      checked={members.length > 0 && selectedMembers.length === members.length} 
-                    />
-                  </th>
+                  {isSelectionMode && (
+                    <th className="checkbox-cell">
+                      <SelectAllCheckbox
+                        allSelected={members.length > 0 && members.every((m) => selectedMembers.includes(m._id))}
+                        someSelected={members.some((m) => selectedMembers.includes(m._id)) && !members.every((m) => selectedMembers.includes(m._id))}
+                        onChange={handleSelectAllVisible}
+                      />
+                    </th>
+                  )}
                   <th>Member Profile</th>
                   <th>Contact</th>
                   <th>Status</th>
@@ -595,15 +713,29 @@ const AllMember = ({ initialFilter = "all", onMemberUpdated }) => {
                 {members.map((m) => {
                   const { status: memStatus, text: memDaysText } = getMembershipStatus(m.expiryDate);
                   return (
-                  <tr key={m._id} className="clickable-row">
-                    <td className="checkbox-cell" onClick={(e) => e.stopPropagation()}>
-                      <input 
-                        type="checkbox" 
-                        onChange={() => handleSelectMember(m._id)} 
-                        checked={selectedMembers.includes(m._id)} 
-                      />
-                    </td>
-                    <td className="member-cell" onClick={() => setViewingMember(m)}>
+                  <tr 
+                    key={m._id} 
+                    className={`clickable-row ${selectedMembers.includes(m._id) ? "row-selected" : ""}`}
+                    onClick={(e) => handleRowClick(e, m)}
+                    onPointerDown={(e) => startPress(e, m)}
+                    onPointerUp={cancelPress}
+                    onPointerCancel={cancelPress}
+                    onPointerLeave={cancelPress}
+                    onPointerMove={onPointerMove}
+                  >
+                    {isSelectionMode && (
+                      <td className="checkbox-cell" onClick={(e) => e.stopPropagation()}>
+                        <div className="checkbox-touch-target">
+                          <input 
+                            type="checkbox" 
+                            className="custom-checkbox"
+                            onChange={() => handleSelectMember(m._id)} 
+                            checked={selectedMembers.includes(m._id)} 
+                          />
+                        </div>
+                      </td>
+                    )}
+                    <td className="member-cell">
                       <div className="member-avatar-wrapper">
                         <img
                           src={m.picture}
@@ -623,13 +755,13 @@ const AllMember = ({ initialFilter = "all", onMemberUpdated }) => {
                         <strong className="member-name-link">{m.name}</strong>
                       </div>
                     </td>
-                    <td onClick={() => setViewingMember(m)}>{m.contact}</td>
-                    <td onClick={() => setViewingMember(m)}>
+                    <td>{m.contact}</td>
+                    <td>
                       <span className={`status-badge ${memStatus}`}>
                         {memStatus === "ACTIVE" ? "● Active" : "✖ Expired"}
                       </span>
                     </td>
-                    <td onClick={() => setViewingMember(m)}>
+                    <td>
                       <div className="expiry-cell">
                         <span>{formatDate(m.expiryDate)}</span>
                         <small className={memStatus === "ACTIVE" ? "days-active" : "days-expired"}>
@@ -637,13 +769,13 @@ const AllMember = ({ initialFilter = "all", onMemberUpdated }) => {
                         </small>
                       </div>
                     </td>
-                    <td onClick={() => setViewingMember(m)}>
+                    <td>
                       <div className="fee-cell">
                         <span>Total: ₹{m.totalAmount}</span>
                         <small className="pending-text">Pending: ₹{m.pendingAmount}</small>
                       </div>
                     </td>
-                    <td onClick={() => setViewingMember(m)}>
+                    <td>
                       <span className={`badge ${m.paymentStatus}`}>
                         {m.paymentStatus === "PAID" ? "PAID" : "PENDING"}
                       </span>
@@ -665,14 +797,28 @@ const AllMember = ({ initialFilter = "all", onMemberUpdated }) => {
             {members.map((m) => {
               const { status: memStatus, text: memDaysText } = getMembershipStatus(m.expiryDate);
               return (
-              <div className="mobile-member-card" key={m._id} onClick={() => setViewingMember(m)}>
-                <div className="mobile-card-checkbox-wrapper" onClick={(e) => e.stopPropagation()}>
-                  <input 
-                    type="checkbox" 
-                    onChange={() => handleSelectMember(m._id)} 
-                    checked={selectedMembers.includes(m._id)} 
-                  />
-                </div>
+              <div 
+                className={`mobile-member-card ${selectedMembers.includes(m._id) ? "card-selected" : ""}`} 
+                key={m._id} 
+                onClick={(e) => handleRowClick(e, m)}
+                onPointerDown={(e) => startPress(e, m)}
+                onPointerUp={cancelPress}
+                onPointerCancel={cancelPress}
+                onPointerLeave={cancelPress}
+                onPointerMove={onPointerMove}
+              >
+                {isSelectionMode && (
+                  <div className="mobile-card-checkbox-wrapper" onClick={(e) => e.stopPropagation()}>
+                    <div className="checkbox-touch-target">
+                      <input 
+                        type="checkbox" 
+                        className="custom-checkbox"
+                        onChange={() => handleSelectMember(m._id)} 
+                        checked={selectedMembers.includes(m._id)} 
+                      />
+                    </div>
+                  </div>
+                )}
                 <div className="mobile-card-header">
                   <div className="mobile-avatar-wrapper">
                     <img
@@ -882,11 +1028,11 @@ const AllMember = ({ initialFilter = "all", onMemberUpdated }) => {
             <div className="danger-icon-wrapper">
               <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"></path><line x1="12" y1="9" x2="12" y2="13"></line><line x1="12" y1="17" x2="12.01" y2="17"></line></svg>
             </div>
-            <h3 className="danger-title">Delete {selectedMembers.length} Members?</h3>
+            <h3 className="danger-title">Delete {selectedMembers.length === 1 ? "1 Member" : `${selectedMembers.length} Members`}?</h3>
             <p className="danger-subtitle">You are about to permanently delete the selected members. This action cannot be undone.</p>
-            <div className="modal-actions danger-actions">
-              <button onClick={() => setBulkDeleteConfirm(false)} disabled={actionLoading} className="cancel-btn danger-cancel">Cancel</button>
-              <button onClick={handleBulkDelete} disabled={actionLoading} className="danger-btn premium-danger-btn">
+            <div className="danger-actions">
+              <button onClick={() => setBulkDeleteConfirm(false)} disabled={actionLoading} className="danger-cancel">Cancel</button>
+              <button onClick={handleBulkDelete} disabled={actionLoading} className="premium-danger-btn">
                 {actionLoading ? "Deleting..." : "Delete Selected"}
               </button>
             </div>

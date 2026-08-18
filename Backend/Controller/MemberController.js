@@ -130,8 +130,7 @@ export const createMember = async (req, res) => {
     return res.status(500).json({
       success: false,
       message: "Server error creating member",
-      error: error.message,
-    });
+});
   }
 };
 
@@ -190,7 +189,6 @@ export const getAllMembers = async (req, res) => {
     return res.status(500).json({
       success: false,
       message: "Server error while fetching members",
-      error: error.message,
     });
   }
 };
@@ -223,8 +221,7 @@ export const getMemberById = async (req, res) => {
     return res.status(500).json({
       success: false,
       message: "Error fetching member details",
-      error: error.message,
-    });
+});
   }
 };
 
@@ -325,8 +322,7 @@ export const updateMember = async (req, res) => {
     return res.status(500).json({
       success: false,
       message: "Server error updating member",
-      error: error.message,
-    });
+});
   }
 };
 
@@ -367,8 +363,7 @@ export const deleteMember = async (req, res) => {
     return res.status(500).json({
       success: false,
       message: "Server error deleting member",
-      error: error.message,
-    });
+});
   }
 };
 
@@ -432,7 +427,6 @@ export const bulkDeleteMembers = async (req, res) => {
     return res.status(500).json({
       success: false,
       message: "Server error during bulk deletion.",
-      error: error.message,
     });
   }
 };

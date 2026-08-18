@@ -103,8 +103,7 @@ export const loginAdmin = async (req, res) => {
     return res.status(500).json({
       success: false,
       message: "Server error during authentication",
-      error: error.message,
-    });
+});
   }
 };
 
@@ -133,8 +132,7 @@ export const getMe = async (req, res) => {
     return res.status(500).json({
       success: false,
       message: "Error fetching owner session",
-      error: error.message,
-    });
+});
   }
 };
 
@@ -204,8 +202,7 @@ export const changePassword = async (req, res) => {
     return res.status(500).json({
       success: false,
       message: "Error changing password",
-      error: error.message,
-    });
+});
   }
 };
 

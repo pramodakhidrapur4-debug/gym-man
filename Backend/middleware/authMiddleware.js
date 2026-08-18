@@ -45,7 +45,7 @@ export const authenticateOwner = async (req, res, next) => {
     // 3. Verify JWT with 15-day server-side expiration enforcement
     const decoded = jwt.verify(
       token,
-      process.env.JWT_SEC || process.env.JWT_SECRET || "default_jwt_secret"
+      process.env.JWT_SEC || process.env.JWT_SECRET
     );
 
     // 4. Verify Role
