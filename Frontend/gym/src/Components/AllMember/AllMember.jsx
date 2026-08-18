@@ -76,6 +76,8 @@ const AllMember = ({ initialFilter = "all", onMemberUpdated }) => {
       totalAmountInput: String(m.totalAmount ?? ""),
       paidAmountInput: String(m.paidAmount ?? ""),
       durationInput: String(m.duration ?? "30"),
+      batch: m.batch ?? "Morning",
+      timeSlot: m.timeSlot ?? "",
     };
     setEditingMember(editData);
     setInitialEditState(editData);
@@ -92,7 +94,9 @@ const AllMember = ({ initialFilter = "all", onMemberUpdated }) => {
       editingMember.startDate !== initialEditState.startDate ||
       editingMember.totalAmountInput !== initialEditState.totalAmountInput ||
       editingMember.paidAmountInput !== initialEditState.paidAmountInput ||
-      editingMember.durationInput !== initialEditState.durationInput
+      editingMember.durationInput !== initialEditState.durationInput ||
+      editingMember.batch !== initialEditState.batch ||
+      editingMember.timeSlot !== initialEditState.timeSlot
     );
   };
 
@@ -263,6 +267,8 @@ const AllMember = ({ initialFilter = "all", onMemberUpdated }) => {
         startDate: editingMember.startDate,
         // Zero-pad the duration to bypass the old Render backend bug where "1" evaluates to 30 days
         duration: `0${durDays}`,
+        batch: editingMember.batch,
+        timeSlot: editingMember.timeSlot.trim(),
         totalAmount: totalNum,
         paidAmount: paidNum,
       };
@@ -704,6 +710,16 @@ const AllMember = ({ initialFilter = "all", onMemberUpdated }) => {
                     <label>Duration</label>
                     <span>{viewingMember.duration} Days</span>
                   </div>
+
+                  <div className="detail-box">
+                    <label>Batch</label>
+                    <span>{viewingMember.batch || "N/A"}</span>
+                  </div>
+
+                  <div className="detail-box">
+                    <label>Time Slot</label>
+                    <span>{viewingMember.timeSlot || "N/A"}</span>
+                  </div>
                 </div>
               </div>
 
@@ -940,6 +956,28 @@ const AllMember = ({ initialFilter = "all", onMemberUpdated }) => {
                           required
                         />
                         <span className="input-suffix-tag">DAYS</span>
+                      </div>
+                    </div>
+
+                    <div className="custom-input-group full-width-group">
+                      <label>BATCH</label>
+                      <div className="preset-days-pills" style={{ marginTop: "8px" }}>
+                        <button type="button" onClick={() => setEditingMember({ ...editingMember, batch: "Morning" })} className={editingMember.batch === "Morning" ? "active-preset" : ""} style={{ flex: 1 }}>Morning</button>
+                        <button type="button" onClick={() => setEditingMember({ ...editingMember, batch: "Evening" })} className={editingMember.batch === "Evening" ? "active-preset" : ""} style={{ flex: 1 }}>Evening</button>
+                      </div>
+                    </div>
+
+                    <div className="custom-input-group">
+                      <label>TIME SLOT</label>
+                      <div className="input-with-icon">
+                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" className="input-icon"><circle cx="12" cy="12" r="10"></circle><polyline points="12 6 12 12 16 14"></polyline></svg>
+                        <input
+                          type="text"
+                          value={editingMember.timeSlot || ""}
+                          placeholder="e.g. 6-7"
+                          onChange={(e) => setEditingMember({ ...editingMember, timeSlot: e.target.value })}
+                          required
+                        />
                       </div>
                     </div>
                   </div>

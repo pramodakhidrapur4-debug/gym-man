@@ -12,6 +12,8 @@ const MembSchema = new mongoose.Schema(
     startDate: { type: Date, default: Date.now },
     expiryDate: { type: Date, required: true },
     duration: { type: Number, default: 30, required: true }, // Duration in DAYS (integer > 0)
+    batch: { type: String, enum: ["Morning", "Evening"], default: "Morning" },
+    timeSlot: { type: String, trim: true, default: "e.g. 6-7" },
     totalAmount: { type: Number, required: true, min: 0 },
     paidAmount: { type: Number, required: true, min: 0, default: 0 },
     pendingAmount: { type: Number, required: true, default: 0 },

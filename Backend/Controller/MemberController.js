@@ -48,13 +48,13 @@ const calculateExpiryDate = (startDateStr, durationDaysInput) => {
 // @access  Private (Owner JWT)
 export const createMember = async (req, res) => {
   try {
-    const { name, contact, picture, startDate, duration, totalAmount, paidAmount } = req.body;
+    const { name, contact, picture, startDate, duration, totalAmount, paidAmount, batch, timeSlot } = req.body;
 
     // 1. Input Validation
-    if (!name || !contact || !startDate || !duration || totalAmount === undefined || paidAmount === undefined) {
+    if (!name || !contact || !startDate || !duration || totalAmount === undefined || paidAmount === undefined || !batch || !timeSlot) {
       return res.status(400).json({
         success: false,
-        message: "Please fill in all required fields (Name, Phone, Start Date, Duration, Total Fee, Paid Amount).",
+        message: "Please fill in all required fields (Name, Phone, Start Date, Duration, Batch, Time Slot, Total Fee, Paid Amount).",
       });
     }
 
@@ -112,6 +112,8 @@ export const createMember = async (req, res) => {
       startDate: start,
       expiryDate,
       duration: durationDays,
+      batch,
+      timeSlot: timeSlot.trim(),
       totalAmount: total,
       paidAmount: paid,
     });
@@ -246,7 +248,7 @@ export const updateMember = async (req, res) => {
       });
     }
 
-    const { name, contact, picture, startDate, duration, totalAmount, paidAmount } = req.body;
+    const { name, contact, picture, startDate, duration, totalAmount, paidAmount, batch, timeSlot } = req.body;
 
     if (totalAmount !== undefined) {
       if (isNaN(Number(totalAmount)) || Number(totalAmount) < 0) {
@@ -279,6 +281,9 @@ export const updateMember = async (req, res) => {
     if (name) member.name = name.trim();
     
     if (contact) member.contact = String(contact).trim();
+
+    if (batch) member.batch = batch;
+    if (timeSlot) member.timeSlot = String(timeSlot).trim();
 
     member.totalAmount = targetTotal;
     member.paidAmount = targetPaid;

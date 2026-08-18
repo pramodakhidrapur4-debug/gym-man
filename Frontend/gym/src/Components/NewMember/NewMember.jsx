@@ -14,6 +14,8 @@ const NewMember = ({ onMemberAdded }) => {
     contact: "",
     startDate: todayStr,
     duration: "30", // Duration in DAYS as controlled string
+    batch: "Morning",
+    timeSlot: "",
     totalAmount: "1000",
     paidAmount: "1000",
     picture: "",
@@ -377,8 +379,8 @@ const NewMember = ({ onMemberAdded }) => {
       return;
     }
 
-    if (!formData.name.trim() || !formData.contact.trim() || !formData.startDate || !formData.duration || formData.totalAmount === "" || formData.paidAmount === "") {
-      setMessage({ type: "error", text: "Please fill in all required fields (Name, Phone, Start Date, Duration, Total Fee, Paid Amount)." });
+    if (!formData.name.trim() || !formData.contact.trim() || !formData.startDate || !formData.duration || formData.totalAmount === "" || formData.paidAmount === "" || !formData.batch || !formData.timeSlot.trim()) {
+      setMessage({ type: "error", text: "Please fill in all required fields (Name, Phone, Start Date, Duration, Batch, Time Slot, Total Fee, Paid Amount)." });
       return;
     }
 
@@ -426,6 +428,8 @@ const NewMember = ({ onMemberAdded }) => {
           startDate: formData.startDate,
           // Zero-pad the duration to bypass the old Render backend bug where "1" evaluates to 30 days
           duration: `0${durationDays}`,
+          batch: formData.batch,
+          timeSlot: formData.timeSlot.trim(),
           totalAmount: total,
           paidAmount: paid,
           picture: formData.picture,
@@ -452,6 +456,8 @@ const NewMember = ({ onMemberAdded }) => {
         contact: "",
         startDate: todayStr,
         duration: "30",
+        batch: "Morning",
+        timeSlot: "",
         totalAmount: "1000",
         paidAmount: "1000",
         picture: "",
@@ -539,6 +545,26 @@ const NewMember = ({ onMemberAdded }) => {
               <button type="button" onClick={() => handlePresetDays(90)} className={formData.duration == 90 ? "active-preset" : ""}>90 Days</button>
               <button type="button" onClick={() => handlePresetDays(365)} className={formData.duration == 365 ? "active-preset" : ""}>365 Days</button>
             </div>
+          </div>
+
+          <div className="form-group full-width-group">
+            <label>Batch *</label>
+            <div className="preset-days-pills">
+              <button type="button" onClick={() => setFormData({ ...formData, batch: "Morning" })} className={formData.batch === "Morning" ? "active-preset" : ""}>Morning</button>
+              <button type="button" onClick={() => setFormData({ ...formData, batch: "Evening" })} className={formData.batch === "Evening" ? "active-preset" : ""}>Evening</button>
+            </div>
+          </div>
+
+          <div className="form-group">
+            <label>Time Slot *</label>
+            <input
+              type="text"
+              name="timeSlot"
+              placeholder="e.g. 6-7"
+              value={formData.timeSlot}
+              onChange={handleInputChange}
+              required
+            />
           </div>
 
           <div className="form-group">
