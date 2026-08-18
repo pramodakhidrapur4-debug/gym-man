@@ -193,18 +193,11 @@ const Landing = () => {
         </div>
       )}
 
-      {/* Dashboard Title & Quick Action */}
       <div className="dashboard-sub-header">
         <div className="dashboard-title-box">
           <h1>Owner Control Dashboard</h1>
           <p>Real-time analytics and member management for POWER HOUSE MULTI GYM</p>
         </div>
-        <button
-          onClick={() => setActiveFilter(activeFilter === "new" ? "all" : "new")}
-          className="add-member-primary-btn"
-        >
-          {activeFilter === "new" ? "📋 Back to Members List" : "➕ Register New Member"}
-        </button>
       </div>
 
       {statsError && (
@@ -311,6 +304,16 @@ const Landing = () => {
           </div>
         </div>
       </section>
+
+      {/* Action Bar (Below Stats, Above Content) */}
+      <div className="dashboard-action-bar">
+        <button
+          onClick={() => setActiveFilter(activeFilter === "new" ? "all" : "new")}
+          className="add-member-primary-btn"
+        >
+          {activeFilter === "new" ? "📋 Back to Members List" : "➕ Register New Member"}
+        </button>
+      </div>
 
       {/* Main Dynamic Workspace Below Cards */}
       <main className="dashboard-content-area">

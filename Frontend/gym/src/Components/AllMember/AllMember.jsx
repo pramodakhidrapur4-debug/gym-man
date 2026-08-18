@@ -23,6 +23,8 @@ const AllMember = ({ initialFilter = "all", onMemberUpdated }) => {
   const [deleteConfirmMember, setDeleteConfirmMember] = useState(null);
   const [paymentModalMember, setPaymentModalMember] = useState(null);
   const [lightboxImage, setLightboxImage] = useState(null);
+  const [selectedMembers, setSelectedMembers] = useState([]);
+  const [bulkDeleteConfirm, setBulkDeleteConfirm] = useState(false);
 
   // Feedback & Toast state
   const [addPaymentAmount, setAddPaymentAmount] = useState("");
@@ -55,7 +57,7 @@ const AllMember = ({ initialFilter = "all", onMemberUpdated }) => {
 
   // Body Scroll Locking when any modal/lightbox is open
   const isAnyModalOpen = Boolean(
-    viewingMember || editingMember || deleteConfirmMember || paymentModalMember || lightboxImage || showUnsavedConfirm
+    viewingMember || editingMember || deleteConfirmMember || paymentModalMember || lightboxImage || showUnsavedConfirm || bulkDeleteConfirm
   );
   useEffect(() => {
     if (isAnyModalOpen) {
@@ -125,12 +127,13 @@ const AllMember = ({ initialFilter = "all", onMemberUpdated }) => {
         else if (editingMember) attemptCloseEditModal();
         else if (viewingMember) setViewingMember(null);
         else if (deleteConfirmMember) setDeleteConfirmMember(null);
+        else if (bulkDeleteConfirm) setBulkDeleteConfirm(false);
         else if (paymentModalMember) setPaymentModalMember(null);
       }
     };
     window.addEventListener("keydown", handleKeyDown);
     return () => window.removeEventListener("keydown", handleKeyDown);
-  }, [lightboxImage, showUnsavedConfirm, editingMember, initialEditState, viewingMember, deleteConfirmMember, paymentModalMember, editPhotoPreview]);
+  }, [lightboxImage, showUnsavedConfirm, editingMember, initialEditState, viewingMember, deleteConfirmMember, bulkDeleteConfirm, paymentModalMember, editPhotoPreview]);
 
   const fetchMembers = async () => {
     setLoading(true);
@@ -170,6 +173,7 @@ const AllMember = ({ initialFilter = "all", onMemberUpdated }) => {
   };
 
   useEffect(() => {
+    setSelectedMembers([]); // clear selection on filter/search/page change
     fetchMembers();
   }, [filter, search, page]);
 
@@ -194,6 +198,54 @@ const AllMember = ({ initialFilter = "all", onMemberUpdated }) => {
   const handleFilterChange = (newFilter) => {
     setFilter(newFilter);
     setPage(1);
+  };
+
+  const handleSelectAll = (e) => {
+    if (e.target.checked) {
+      setSelectedMembers(members.map((m) => m._id));
+    } else {
+      setSelectedMembers([]);
+    }
+  };
+
+  const handleSelectMember = (id) => {
+    setSelectedMembers((prev) => 
+      prev.includes(id) ? prev.filter((item) => item !== id) : [...prev, id]
+    );
+  };
+
+  const handleBulkDelete = async () => {
+    if (selectedMembers.length === 0) return;
+    
+    setActionError("");
+    setActionLoading(true);
+    try {
+      const headers = { "Content-Type": "application/json" };
+      const storedToken = token || localStorage.getItem("gym_owner_token");
+      if (storedToken) headers["Authorization"] = `Bearer ${storedToken}`;
+
+      const response = await fetch(`${API_BASE_URL}/api/members/bulk-delete`, {
+        method: "POST",
+        headers,
+        credentials: "include",
+        body: JSON.stringify({ memberIds: selectedMembers }),
+      });
+
+      const data = await response.json();
+      if (response.ok && data.success) {
+        showToast(`${data.deletedCount} members permanently removed`);
+        setBulkDeleteConfirm(false);
+        setSelectedMembers([]);
+        fetchMembers();
+        if (onMemberUpdated) onMemberUpdated();
+      } else {
+        setActionError(data.message || "Failed to delete selected members");
+      }
+    } catch (err) {
+      setActionError("Network error while bulk deleting members");
+    } finally {
+      setActionLoading(false);
+    }
   };
 
   const handleDelete = async (id) => {
@@ -479,6 +531,20 @@ const AllMember = ({ initialFilter = "all", onMemberUpdated }) => {
         </div>
       </div>
 
+      {/* Bulk Actions Bar */}
+      {selectedMembers.length > 0 && (
+        <div className="bulk-actions-bar">
+          <span className="bulk-selected-text">{selectedMembers.length} Members Selected</span>
+          <button 
+            className="bulk-delete-btn" 
+            onClick={() => setBulkDeleteConfirm(true)}
+            disabled={actionLoading}
+          >
+            Delete Selected
+          </button>
+        </div>
+      )}
+
       {actionError && <div className="alert-banner error">{actionError}</div>}
 
       {/* Content Area */}
@@ -509,6 +575,13 @@ const AllMember = ({ initialFilter = "all", onMemberUpdated }) => {
             <table className="members-table">
               <thead>
                 <tr>
+                  <th className="checkbox-cell">
+                    <input 
+                      type="checkbox" 
+                      onChange={handleSelectAll} 
+                      checked={members.length > 0 && selectedMembers.length === members.length} 
+                    />
+                  </th>
                   <th>Member Profile</th>
                   <th>Contact</th>
                   <th>Status</th>
@@ -523,6 +596,13 @@ const AllMember = ({ initialFilter = "all", onMemberUpdated }) => {
                   const { status: memStatus, text: memDaysText } = getMembershipStatus(m.expiryDate);
                   return (
                   <tr key={m._id} className="clickable-row">
+                    <td className="checkbox-cell" onClick={(e) => e.stopPropagation()}>
+                      <input 
+                        type="checkbox" 
+                        onChange={() => handleSelectMember(m._id)} 
+                        checked={selectedMembers.includes(m._id)} 
+                      />
+                    </td>
                     <td className="member-cell" onClick={() => setViewingMember(m)}>
                       <div className="member-avatar-wrapper">
                         <img
@@ -586,6 +666,13 @@ const AllMember = ({ initialFilter = "all", onMemberUpdated }) => {
               const { status: memStatus, text: memDaysText } = getMembershipStatus(m.expiryDate);
               return (
               <div className="mobile-member-card" key={m._id} onClick={() => setViewingMember(m)}>
+                <div className="mobile-card-checkbox-wrapper" onClick={(e) => e.stopPropagation()}>
+                  <input 
+                    type="checkbox" 
+                    onChange={() => handleSelectMember(m._id)} 
+                    checked={selectedMembers.includes(m._id)} 
+                  />
+                </div>
                 <div className="mobile-card-header">
                   <div className="mobile-avatar-wrapper">
                     <img
@@ -782,6 +869,25 @@ const AllMember = ({ initialFilter = "all", onMemberUpdated }) => {
               <button onClick={() => setDeleteConfirmMember(null)} disabled={actionLoading} className="cancel-btn danger-cancel">Cancel</button>
               <button onClick={() => handleDelete(deleteConfirmMember._id)} disabled={actionLoading} className="danger-btn premium-danger-btn">
                 {actionLoading ? "Deleting..." : "Yes, Delete Member"}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Bulk Delete Confirmation Dialog */}
+      {bulkDeleteConfirm && (
+        <div className="modal-overlay" onClick={() => setBulkDeleteConfirm(false)}>
+          <div className="modal-card premium-danger-card" onClick={(e) => e.stopPropagation()}>
+            <div className="danger-icon-wrapper">
+              <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"></path><line x1="12" y1="9" x2="12" y2="13"></line><line x1="12" y1="17" x2="12.01" y2="17"></line></svg>
+            </div>
+            <h3 className="danger-title">Delete {selectedMembers.length} Members?</h3>
+            <p className="danger-subtitle">You are about to permanently delete the selected members. This action cannot be undone.</p>
+            <div className="modal-actions danger-actions">
+              <button onClick={() => setBulkDeleteConfirm(false)} disabled={actionLoading} className="cancel-btn danger-cancel">Cancel</button>
+              <button onClick={handleBulkDelete} disabled={actionLoading} className="danger-btn premium-danger-btn">
+                {actionLoading ? "Deleting..." : "Delete Selected"}
               </button>
             </div>
           </div>

@@ -371,3 +371,68 @@ export const deleteMember = async (req, res) => {
     });
   }
 };
+
+// @desc    Bulk Delete Members & Clean Up Cloudinary Images
+// @route   POST /api/members/bulk-delete
+// @access  Private (Owner JWT)
+export const bulkDeleteMembers = async (req, res) => {
+  try {
+    const { memberIds } = req.body;
+
+    if (!Array.isArray(memberIds) || memberIds.length === 0) {
+      return res.status(400).json({
+        success: false,
+        message: "No member IDs provided for deletion.",
+      });
+    }
+
+    // Validate all IDs
+    const validIds = memberIds.filter((id) => mongoose.Types.ObjectId.isValid(id));
+    if (validIds.length === 0) {
+      return res.status(400).json({
+        success: false,
+        message: "Invalid member IDs provided.",
+      });
+    }
+
+    // Fetch members to get their Cloudinary public IDs
+    const membersToDelete = await Member.find({ _id: { $in: validIds } });
+    
+    if (membersToDelete.length === 0) {
+      return res.status(404).json({
+        success: false,
+        message: "No matching members found to delete.",
+      });
+    }
+
+    // Extract Cloudinary public IDs for those who have an image
+    const publicIds = membersToDelete
+      .map((m) => m.cloudinaryPublicId)
+      .filter((id) => id);
+
+    // Delete members from MongoDB
+    await Member.deleteMany({ _id: { $in: validIds } });
+
+    // Clean up Cloudinary images sequentially (or could be Promise.all, but sequential is safer for rate limits)
+    for (const publicId of publicIds) {
+      try {
+        await deleteFromCloudinary(publicId);
+      } catch (cloudErr) {
+        console.error(`Failed to delete image ${publicId} from Cloudinary`, cloudErr);
+      }
+    }
+
+    return res.status(200).json({
+      success: true,
+      message: `Successfully deleted ${validIds.length} members.`,
+      deletedCount: validIds.length
+    });
+  } catch (error) {
+    console.error("Error bulk deleting members:", error);
+    return res.status(500).json({
+      success: false,
+      message: "Server error during bulk deletion.",
+      error: error.message,
+    });
+  }
+};
