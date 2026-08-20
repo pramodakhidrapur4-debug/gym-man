@@ -45,7 +45,7 @@ app.use('/api', limiter);
 // Dynamic & Credentialed CORS Configuration
 const allowedOrigins = [
   process.env.CLIENT_URL,
-  "https://gym-man-six.vercel.app",
+  "https://gym-man-phi.vercel.app",
   "http://localhost:5174",
   "http://localhost:5173",
   "http://localhost:3000",
