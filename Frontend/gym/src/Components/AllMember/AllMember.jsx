@@ -163,8 +163,8 @@ const AllMember = ({ initialFilter = "all", onMemberUpdated }) => {
     return () => window.removeEventListener("keydown", handleKeyDown);
   }, [lightboxImage, showUnsavedConfirm, editingMember, initialEditState, viewingMember, deleteConfirmMember, bulkDeleteConfirm, paymentModalMember, editPhotoPreview]);
 
-  const fetchMembers = async () => {
-    setLoading(true);
+  const fetchMembers = async (showLoader = true) => {
+    if (showLoader) setLoading(true);
     try {
       const headers = { "Content-Type": "application/json" };
       const storedToken = token || localStorage.getItem("gym_owner_token");
@@ -196,12 +196,12 @@ const AllMember = ({ initialFilter = "all", onMemberUpdated }) => {
       console.error("Fetch members error:", err);
       showToast("Failed to fetch members. Please check your connection.");
     } finally {
-      setLoading(false);
+      if (showLoader) setLoading(false);
     }
   };
 
   useEffect(() => {
-    fetchMembers();
+    fetchMembers(true);
   }, [filter, search, page]);
 
   // Debounce search input
@@ -323,10 +323,12 @@ const AllMember = ({ initialFilter = "all", onMemberUpdated }) => {
 
       const data = await response.json();
       if (response.ok && data.success) {
-        showToast(`${data.deletedCount} members permanently removed`);
+        showToast(`${data.deletedCount || selectedMembers.length} members permanently removed`);
+        setMembers((prev) => prev.filter((m) => !selectedMembers.includes(m._id)));
+        setTotalCount((prev) => Math.max(0, prev - selectedMembers.length));
         setBulkDeleteConfirm(false);
         cancelSelectionMode();
-        fetchMembers();
+        fetchMembers(false);
         if (onMemberUpdated) onMemberUpdated();
       } else {
         setActionError(data.message || "Failed to delete selected members");
@@ -355,9 +357,11 @@ const AllMember = ({ initialFilter = "all", onMemberUpdated }) => {
       const data = await response.json();
       if (response.ok && data.success) {
         showToast("Member permanently removed");
+        setMembers((prev) => prev.filter((m) => m._id !== id));
+        setTotalCount((prev) => Math.max(0, prev - 1));
         setDeleteConfirmMember(null);
         setViewingMember(null);
-        fetchMembers();
+        fetchMembers(false);
         if (onMemberUpdated) onMemberUpdated();
       } else {
         setActionError(data.message || "Failed to delete member");
@@ -430,7 +434,7 @@ const AllMember = ({ initialFilter = "all", onMemberUpdated }) => {
       if (response.ok && data.success) {
         showToast("Member updated successfully!");
         forceCloseEditModal();
-        fetchMembers();
+        fetchMembers(false);
         if (onMemberUpdated) onMemberUpdated();
       } else {
         setActionError(data.message || "Failed to update member");
@@ -476,7 +480,7 @@ const AllMember = ({ initialFilter = "all", onMemberUpdated }) => {
         showToast("Payment recorded successfully!");
         setPaymentModalMember(null);
         setAddPaymentAmount("");
-        fetchMembers();
+        fetchMembers(false);
         if (onMemberUpdated) onMemberUpdated();
       } else {
         setActionError(data.message || "Failed to record payment.");
