@@ -417,7 +417,7 @@ const NewMember = ({ onMemberAdded }) => {
       const storedToken = token || localStorage.getItem("gym_owner_token");
       if (storedToken) headers["Authorization"] = `Bearer ${storedToken}`;
 
-      const response = await fetch(`${API_BASE_URL}/api/members`, {
+      const response = await fetch(`${API_BASE_URL}/members`, {
         method: "POST",
         headers,
         credentials: "include",

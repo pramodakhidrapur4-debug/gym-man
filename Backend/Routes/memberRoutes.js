@@ -18,7 +18,7 @@ router.post("/", createMember);
 router.get("/", getAllMembers);
 router.get("/:id", getMemberById);
 router.put("/:id", updateMember);
-router.post("/bulk-delete", bulkDeleteMembers);
+router.delete("/bulk-delete", bulkDeleteMembers);
 router.delete("/:id", deleteMember);
 
 export default router;

@@ -170,7 +170,7 @@ const AllMember = ({ initialFilter = "all", onMemberUpdated }) => {
       const storedToken = token || localStorage.getItem("gym_owner_token");
       if (storedToken) headers["Authorization"] = `Bearer ${storedToken}`;
 
-      let url = `${API_BASE_URL}/api/members`;
+      let url = `${API_BASE_URL}/members`;
       const params = new URLSearchParams();
       params.append("page", page);
       params.append("limit", 8);
@@ -314,8 +314,8 @@ const AllMember = ({ initialFilter = "all", onMemberUpdated }) => {
       const storedToken = token || localStorage.getItem("gym_owner_token");
       if (storedToken) headers["Authorization"] = `Bearer ${storedToken}`;
 
-      const response = await fetch(`${API_BASE_URL}/api/members/bulk-delete`, {
-        method: "POST",
+      const response = await fetch(`${API_BASE_URL}/members/bulk-delete`, {
+        method: "DELETE",
         headers,
         credentials: "include",
         body: JSON.stringify({ memberIds: selectedMembers }),
@@ -348,7 +348,7 @@ const AllMember = ({ initialFilter = "all", onMemberUpdated }) => {
       const storedToken = token || localStorage.getItem("gym_owner_token");
       if (storedToken) headers["Authorization"] = `Bearer ${storedToken}`;
 
-      const response = await fetch(`${API_BASE_URL}/api/members/${id}`, {
+      const response = await fetch(`${API_BASE_URL}/members/${id}`, {
         method: "DELETE",
         headers,
         credentials: "include",
@@ -423,7 +423,7 @@ const AllMember = ({ initialFilter = "all", onMemberUpdated }) => {
         payload.picture = editPhotoPreview;
       }
 
-      const response = await fetch(`${API_BASE_URL}/api/members/${editingMember._id}`, {
+      const response = await fetch(`${API_BASE_URL}/members/${editingMember._id}`, {
         method: "PUT",
         headers,
         credentials: "include",
@@ -468,8 +468,8 @@ const AllMember = ({ initialFilter = "all", onMemberUpdated }) => {
       const storedToken = token || localStorage.getItem("gym_owner_token");
       if (storedToken) headers["Authorization"] = `Bearer ${storedToken}`;
 
-      const response = await fetch(`${API_BASE_URL}/api/members/${paymentModalMember._id}`, {
-        method: "PUT",
+      const response = await fetch(`${API_BASE_URL}/members/${paymentModalMember._id}`, {
+        method: "PATCH",
         headers,
         credentials: "include",
         body: JSON.stringify({ paidAmount: newPaidTotal }),

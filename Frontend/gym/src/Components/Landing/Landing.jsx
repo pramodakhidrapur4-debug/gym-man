@@ -38,7 +38,7 @@ const Landing = () => {
       const storedToken = token || localStorage.getItem("gym_owner_token");
       if (storedToken) headers["Authorization"] = `Bearer ${storedToken}`;
 
-      const response = await fetch(`${API_BASE_URL}/api/dashboard`, {
+      const response = await fetch(`${API_BASE_URL}/dashboard`, {
         method: "GET",
         headers,
         credentials: "include",

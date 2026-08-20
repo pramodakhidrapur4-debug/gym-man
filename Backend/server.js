@@ -55,22 +55,7 @@ const allowedOrigins = [
 
 app.use(
   cors({
-    origin: (origin, callback) => {
-      // Allow requests with no origin (like server-to-server, mobile apps, postman)
-      if (!origin) return callback(null, true);
-
-      // Strictly validate origin
-      if (allowedOrigins.includes(origin)) {
-        return callback(null, origin);
-      }
-      
-      // Allow local development dynamically only if in development mode
-      if (process.env.NODE_ENV === 'development' && (origin.startsWith("http://localhost:") || origin.startsWith("http://127.0.0.1:"))) {
-        return callback(null, origin);
-      }
-
-      return callback(new Error('Not allowed by CORS'));
-    },
+    origin: allowedOrigins,
     credentials: true,
     methods: ["GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS"],
     allowedHeaders: ["Content-Type", "Authorization", "X-Requested-With", "Accept"],

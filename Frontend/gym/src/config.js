@@ -1,2 +1,2 @@
-const rawApiUrl = import.meta.env.VITE_API_URL || "https://gym-man-backend.onrender.com";
+const rawApiUrl = import.meta.env.VITE_API_BASE_URL || "http://localhost:8000/api";
 export const API_BASE_URL = rawApiUrl.replace(/\/$/, "");

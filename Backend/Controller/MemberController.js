@@ -368,7 +368,7 @@ export const deleteMember = async (req, res) => {
 };
 
 // @desc    Bulk Delete Members & Clean Up Cloudinary Images
-// @route   POST /api/members/bulk-delete
+// @route   DELETE /api/members/bulk-delete
 // @access  Private (Owner JWT)
 export const bulkDeleteMembers = async (req, res) => {
   try {
@@ -420,7 +420,8 @@ export const bulkDeleteMembers = async (req, res) => {
     return res.status(200).json({
       success: true,
       message: `Successfully deleted ${validIds.length} members.`,
-      deletedCount: validIds.length
+      deletedCount: validIds.length,
+      deletedIds: validIds
     });
   } catch (error) {
     console.error("Error bulk deleting members:", error);
