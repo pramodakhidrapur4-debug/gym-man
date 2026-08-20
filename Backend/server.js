@@ -62,9 +62,6 @@ app.use(
   })
 );
 
-// Explicitly handle OPTIONS preflight across all routes
-app.options('*', cors());
-
 // Connect MongoDB Atlas & Seed Default Owner (Idempotent)
 mong();
 setTimeout(() => {
