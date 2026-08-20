@@ -62,6 +62,9 @@ app.use(
   })
 );
 
+// Explicitly handle OPTIONS preflight across all routes
+app.options('*', cors());
+
 // Connect MongoDB Atlas & Seed Default Owner (Idempotent)
 mong();
 setTimeout(() => {
@@ -74,9 +77,14 @@ app.use('/api/admin', adminRoutes);
 app.use('/api/members', memberRoutes);
 app.use('/api/dashboard', dashboardRoutes);
 
-// Health Check Endpoint
+// Health Check Endpoint for /api
 app.get('/api/health', (req, res) => {
   res.json({ success: true, message: 'POWER HOUSE MULTI GYM Server running normally' });
+});
+
+// Root Health Check Endpoint for Render
+app.get('/', (req, res) => {
+  res.json({ success: true, message: 'POWER HOUSE GYM API is running' });
 });
 
 // Centralized Unhandled Error Handling Middleware
