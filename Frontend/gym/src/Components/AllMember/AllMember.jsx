@@ -334,7 +334,7 @@ const AllMember = ({ initialFilter = "all", onMemberUpdated }) => {
         setActionError(data.message || "Failed to delete selected members");
       }
     } catch (err) {
-      setActionError("Network error while bulk deleting members");
+      setActionError(err.message || "Network error while bulk deleting members");
     } finally {
       setActionLoading(false);
     }
@@ -367,7 +367,7 @@ const AllMember = ({ initialFilter = "all", onMemberUpdated }) => {
         setActionError(data.message || "Failed to delete member");
       }
     } catch (err) {
-      setActionError("Network error while deleting member");
+      setActionError(err.message || "Network error while deleting member");
     } finally {
       setActionLoading(false);
     }
@@ -1015,6 +1015,7 @@ const AllMember = ({ initialFilter = "all", onMemberUpdated }) => {
             </div>
             <h3 className="danger-title">Delete {deleteConfirmMember.name}?</h3>
             <p className="danger-subtitle">This member will be permanently removed from MongoDB.</p>
+            {actionError && <div className="alert-banner error" style={{ margin: "10px 0" }}>{actionError}</div>}
             <div className="modal-actions danger-actions">
               <button onClick={() => setDeleteConfirmMember(null)} disabled={actionLoading} className="cancel-btn danger-cancel">Cancel</button>
               <button onClick={() => handleDelete(deleteConfirmMember._id)} disabled={actionLoading} className="danger-btn premium-danger-btn">
@@ -1034,6 +1035,7 @@ const AllMember = ({ initialFilter = "all", onMemberUpdated }) => {
             </div>
             <h3 className="danger-title">Delete {selectedMembers.length === 1 ? "1 Member" : `${selectedMembers.length} Members`}?</h3>
             <p className="danger-subtitle">You are about to permanently delete the selected members. This action cannot be undone.</p>
+            {actionError && <div className="alert-banner error" style={{ margin: "10px 0" }}>{actionError}</div>}
             <div className="danger-actions">
               <button onClick={() => setBulkDeleteConfirm(false)} disabled={actionLoading} className="danger-cancel">Cancel</button>
               <button onClick={handleBulkDelete} disabled={actionLoading} className="premium-danger-btn">
