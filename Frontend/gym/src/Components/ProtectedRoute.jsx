@@ -3,7 +3,7 @@ import { Navigate } from "react-router-dom";
 import { useAuth } from "../context/AuthContext";
 
 const ProtectedRoute = ({ children }) => {
-  const { isAuthenticated, loading } = useAuth();
+  const { isAuthenticated, loading, loadingMessage, isNetworkError, verifySession } = useAuth();
 
   if (loading) {
     return (
@@ -38,8 +38,43 @@ const ProtectedRoute = ({ children }) => {
           `}
         </style>
         <p style={{ marginTop: "1rem", color: "#a0aec0", fontSize: "0.95rem" }}>
-          Authenticating Owner Access...
+          {loadingMessage}
         </p>
+      </div>
+    );
+  }
+
+  if (isNetworkError) {
+    return (
+      <div
+        style={{
+          display: "flex",
+          flexDirection: "column",
+          alignItems: "center",
+          justifyContent: "center",
+          minHeight: "100vh",
+          backgroundColor: "#0d0f17",
+          color: "#fff",
+          fontFamily: "'Segoe UI', Roboto, sans-serif",
+        }}
+      >
+        <p style={{ color: "#e63946", fontSize: "1.1rem", marginBottom: "1rem" }}>
+          Unable to connect to the server. Please try again.
+        </p>
+        <button
+          onClick={verifySession}
+          style={{
+            padding: "10px 20px",
+            background: "#ffcc00",
+            color: "#000",
+            border: "none",
+            borderRadius: "5px",
+            cursor: "pointer",
+            fontWeight: "bold",
+          }}
+        >
+          Retry
+        </button>
       </div>
     );
   }

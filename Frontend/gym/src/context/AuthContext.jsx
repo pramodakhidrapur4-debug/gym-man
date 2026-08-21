@@ -9,51 +9,74 @@ export const AuthProvider = ({ children }) => {
   const [token, setToken] = useState(localStorage.getItem("gym_owner_token"));
   const [isAuthenticated, setIsAuthenticated] = useState(false);
   const [loading, setLoading] = useState(true);
+  const [loadingMessage, setLoadingMessage] = useState("Loading POWER HOUSE MULTI GYM...");
+  const [isNetworkError, setIsNetworkError] = useState(false);
   const [authError, setAuthError] = useState("");
 
-  // Check auth session validity on application load (GET /api/auth/me)
-  useEffect(() => {
-    const verifySession = async () => {
-      const storedToken = localStorage.getItem("gym_owner_token");
+  const verifySession = async () => {
+    setLoading(true);
+    setIsNetworkError(false);
+    setLoadingMessage("Loading POWER HOUSE MULTI GYM...");
+    const storedToken = localStorage.getItem("gym_owner_token");
 
-      try {
-        const headers = {
-          "Content-Type": "application/json",
-        };
-        if (storedToken) {
-          headers["Authorization"] = `Bearer ${storedToken}`;
-        }
+    const msgTimer = setTimeout(() => {
+      setLoadingMessage("Starting secure server, please wait...");
+    }, 3000);
 
-        const response = await fetch(`${API_BASE_URL}/auth/me`, {
-          method: "GET",
-          headers,
-          credentials: "include", // Pass HTTP-only session cookies
-        });
+    const controller = new AbortController();
+    const timeoutId = setTimeout(() => {
+      controller.abort();
+    }, 10000);
 
-        const data = await response.json();
+    try {
+      const headers = {
+        "Content-Type": "application/json",
+      };
+      if (storedToken) {
+        headers["Authorization"] = `Bearer ${storedToken}`;
+      }
 
-        if (response.ok && data.success) {
-          const activeUser = data.user || data.admin;
-          setUser(activeUser);
-          setIsAuthenticated(true);
-        } else {
-          // 401 Session expired or invalid
-          localStorage.removeItem("gym_owner_token");
-          setToken(null);
-          setUser(null);
-          setIsAuthenticated(false);
-        }
-      } catch (err) {
-        console.error("Session verification failed:", err);
+      const response = await fetch(`${API_BASE_URL}/auth/me`, {
+        method: "GET",
+        headers,
+        credentials: "include", // Pass HTTP-only session cookies
+        signal: controller.signal,
+      });
+
+      clearTimeout(timeoutId);
+      const data = await response.json();
+
+      if (response.ok && data.success) {
+        const activeUser = data.user || data.admin;
+        setUser(activeUser);
+        setIsAuthenticated(true);
+      } else {
+        // 401 Session expired or invalid
         localStorage.removeItem("gym_owner_token");
         setToken(null);
         setUser(null);
         setIsAuthenticated(false);
-      } finally {
-        setLoading(false);
       }
-    };
+    } catch (err) {
+      clearTimeout(timeoutId);
+      console.error("Session verification failed:", err);
+      // Determine if it's a timeout/network error
+      if (err.name === "AbortError" || err.message.includes("fetch") || err.message.includes("Network")) {
+        setIsNetworkError(true);
+      } else {
+        localStorage.removeItem("gym_owner_token");
+        setToken(null);
+        setUser(null);
+        setIsAuthenticated(false);
+      }
+    } finally {
+      clearTimeout(msgTimer);
+      setLoading(false);
+    }
+  };
 
+  // Check auth session validity on application load (GET /api/auth/me)
+  useEffect(() => {
     verifySession();
   }, []);
 
@@ -149,11 +172,14 @@ export const AuthProvider = ({ children }) => {
         token,
         isAuthenticated,
         loading,
+        loadingMessage,
+        isNetworkError,
         authError,
         login,
         changeOwnerPassword,
         logout,
         clearError,
+        verifySession,
       }}
     >
       {children}
