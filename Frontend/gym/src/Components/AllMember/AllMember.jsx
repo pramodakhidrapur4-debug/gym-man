@@ -33,6 +33,8 @@ const AllMember = ({ initialFilter = "all", onMemberUpdated }) => {
   const [search, setSearch] = useState("");
   const [searchInput, setSearchInput] = useState(""); // For debouncing
   const [filter, setFilter] = useState(initialFilter);
+  const [durationFilter, setDurationFilter] = useState("all");
+  const [isDurationMenuOpen, setIsDurationMenuOpen] = useState(false);
   const [page, setPage] = useState(1);
   const [totalPages, setTotalPages] = useState(1);
   const [totalCount, setTotalCount] = useState(0);
@@ -80,6 +82,7 @@ const AllMember = ({ initialFilter = "all", onMemberUpdated }) => {
 
   useEffect(() => {
     setFilter(initialFilter);
+    setDurationFilter("all");
     setPage(1);
   }, [initialFilter]);
 
@@ -97,6 +100,17 @@ const AllMember = ({ initialFilter = "all", onMemberUpdated }) => {
       document.body.style.overflow = "unset";
     };
   }, [isAnyModalOpen]);
+
+  const durationDropdownRef = React.useRef(null);
+  useEffect(() => {
+    const handleClickOutside = (event) => {
+      if (durationDropdownRef.current && !durationDropdownRef.current.contains(event.target)) {
+        setIsDurationMenuOpen(false);
+      }
+    };
+    document.addEventListener("mousedown", handleClickOutside);
+    return () => document.removeEventListener("mousedown", handleClickOutside);
+  }, []);
 
   const openEditModal = useCallback((m) => {
     const formattedDate = m.startDate ? new Date(m.startDate).toISOString().split("T")[0] : "";
@@ -150,7 +164,8 @@ const AllMember = ({ initialFilter = "all", onMemberUpdated }) => {
   useEffect(() => {
     const handleKeyDown = (e) => {
       if (e.key === "Escape") {
-        if (lightboxImage) setLightboxImage(null);
+        if (isDurationMenuOpen) setIsDurationMenuOpen(false);
+        else if (lightboxImage) setLightboxImage(null);
         else if (showUnsavedConfirm) setShowUnsavedConfirm(false);
         else if (editingMember) attemptCloseEditModal();
         else if (viewingMember) setViewingMember(null);
@@ -161,7 +176,7 @@ const AllMember = ({ initialFilter = "all", onMemberUpdated }) => {
     };
     window.addEventListener("keydown", handleKeyDown);
     return () => window.removeEventListener("keydown", handleKeyDown);
-  }, [lightboxImage, showUnsavedConfirm, editingMember, initialEditState, viewingMember, deleteConfirmMember, bulkDeleteConfirm, paymentModalMember, editPhotoPreview]);
+  }, [lightboxImage, showUnsavedConfirm, editingMember, initialEditState, viewingMember, deleteConfirmMember, bulkDeleteConfirm, paymentModalMember, editPhotoPreview, isDurationMenuOpen]);
 
   const fetchMembers = async (showLoader = true) => {
     if (showLoader) setLoading(true);
@@ -176,6 +191,7 @@ const AllMember = ({ initialFilter = "all", onMemberUpdated }) => {
       params.append("limit", 8);
 
       if (filter && filter !== "all") params.append("filter", filter);
+      if (durationFilter && durationFilter !== "all") params.append("durationFilter", durationFilter);
       if (search.trim()) params.append("search", search.trim());
 
       url += `?${params.toString()}`;
@@ -202,7 +218,7 @@ const AllMember = ({ initialFilter = "all", onMemberUpdated }) => {
 
   useEffect(() => {
     fetchMembers(true);
-  }, [filter, search, page]);
+  }, [filter, durationFilter, search, page]);
 
   // Debounce search input
   useEffect(() => {
@@ -224,6 +240,11 @@ const AllMember = ({ initialFilter = "all", onMemberUpdated }) => {
 
   const handleFilterChange = (newFilter) => {
     setFilter(newFilter);
+    setPage(1);
+  };
+
+  const handleDurationChange = (val) => {
+    setDurationFilter(val);
     setPage(1);
   };
 
@@ -623,6 +644,41 @@ const AllMember = ({ initialFilter = "all", onMemberUpdated }) => {
           <button className={`filter-pill ${filter === "paid" ? "active" : ""}`} onClick={() => handleFilterChange("paid")}>Paid</button>
           <button className={`filter-pill ${filter === "pending" ? "active" : ""}`} onClick={() => handleFilterChange("pending")}>Pending</button>
           
+          <div className="custom-dropdown-container" ref={durationDropdownRef}>
+            <button 
+              type="button" 
+              className={`filter-pill custom-dropdown-trigger ${durationFilter !== "all" ? "active" : ""}`}
+              onClick={() => setIsDurationMenuOpen(!isDurationMenuOpen)}
+            >
+              {durationFilter === "all" ? "All Durations" : 
+               durationFilter === "12" ? "12 Months (1 Year)" : 
+               `${durationFilter} Month${durationFilter === "1" ? "" : "s"}`}
+              <svg className={`chevron ${isDurationMenuOpen ? "open" : ""}`} width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+                <polyline points="6 9 12 15 18 9"></polyline>
+              </svg>
+            </button>
+            
+            {isDurationMenuOpen && (
+              <div className="custom-dropdown-menu">
+                <button type="button" className={`dropdown-item ${durationFilter === "all" ? "selected" : ""}`} onClick={() => { handleDurationChange("all"); setIsDurationMenuOpen(false); }}>
+                  <span className="check-placeholder">{durationFilter === "all" ? "✓" : ""}</span> All Durations
+                </button>
+                <button type="button" className={`dropdown-item ${durationFilter === "1" ? "selected" : ""}`} onClick={() => { handleDurationChange("1"); setIsDurationMenuOpen(false); }}>
+                  <span className="check-placeholder">{durationFilter === "1" ? "✓" : ""}</span> 1 Month
+                </button>
+                <button type="button" className={`dropdown-item ${durationFilter === "3" ? "selected" : ""}`} onClick={() => { handleDurationChange("3"); setIsDurationMenuOpen(false); }}>
+                  <span className="check-placeholder">{durationFilter === "3" ? "✓" : ""}</span> 3 Months
+                </button>
+                <button type="button" className={`dropdown-item ${durationFilter === "6" ? "selected" : ""}`} onClick={() => { handleDurationChange("6"); setIsDurationMenuOpen(false); }}>
+                  <span className="check-placeholder">{durationFilter === "6" ? "✓" : ""}</span> 6 Months
+                </button>
+                <button type="button" className={`dropdown-item ${durationFilter === "12" ? "selected" : ""}`} onClick={() => { handleDurationChange("12"); setIsDurationMenuOpen(false); }}>
+                  <span className="check-placeholder">{durationFilter === "12" ? "✓" : ""}</span> 12 Months (1 Year)
+                </button>
+              </div>
+            )}
+          </div>
+
           <button 
             className={`filter-pill select-toggle-btn ${isSelectionMode ? "active" : ""}`} 
             onClick={() => {
