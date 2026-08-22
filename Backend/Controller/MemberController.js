@@ -1,4 +1,5 @@
 import Member from "../Modules/NewMem.js";
+import PaymentTransaction from "../Modules/PaymentTransaction.js";
 import { uploadToCloudinary, deleteFromCloudinary } from "../utility/cloudinary.js";
 import mongoose from "mongoose";
 
@@ -119,6 +120,13 @@ export const createMember = async (req, res) => {
     });
 
     await newMember.save();
+
+    if (paid > 0) {
+      await PaymentTransaction.create({
+        memberId: newMember._id,
+        amount: paid,
+      });
+    }
 
     return res.status(201).json({
       success: true,
@@ -275,6 +283,8 @@ export const updateMember = async (req, res) => {
       });
     }
 
+    const previousPaidAmount = member.paidAmount;
+
     if (name) member.name = name.trim();
     
     if (contact) member.contact = String(contact).trim();
@@ -311,6 +321,14 @@ export const updateMember = async (req, res) => {
 
     // Pre-save hook recalculates pendingAmount and paymentStatus
     await member.save();
+
+    if (targetPaid > previousPaidAmount) {
+      const paymentReceived = targetPaid - previousPaidAmount;
+      await PaymentTransaction.create({
+        memberId: member._id,
+        amount: paymentReceived,
+      });
+    }
 
     return res.status(200).json({
       success: true,

@@ -22,6 +22,7 @@ const Landing = () => {
     pendingMembers: 0,
     totalRevenue: 0,
     pendingRevenue: 0,
+    todayIncome: 0,
   });
 
   const [loadingStats, setLoadingStats] = useState(true);
@@ -60,6 +61,39 @@ const Landing = () => {
 
   useEffect(() => {
     fetchDashboardStats();
+
+    // 1. Refresh on tab visibility return
+    const handleVisibilityChange = () => {
+      if (document.visibilityState === "visible") {
+        fetchDashboardStats();
+      }
+    };
+    document.addEventListener("visibilitychange", handleVisibilityChange);
+
+    // 2. Refresh at exactly midnight IST
+    let timeoutId;
+    const scheduleMidnightRefresh = () => {
+      const now = new Date();
+      const istOffset = 5.5 * 60 * 60 * 1000;
+      const istNow = new Date(now.getTime() + istOffset);
+      
+      const nextMidnightIST = new Date(istNow);
+      nextMidnightIST.setUTCHours(24, 0, 0, 0);
+
+      const msUntilMidnight = nextMidnightIST.getTime() - istNow.getTime();
+
+      timeoutId = setTimeout(() => {
+        fetchDashboardStats();
+        scheduleMidnightRefresh();
+      }, msUntilMidnight + 1000);
+    };
+
+    scheduleMidnightRefresh();
+
+    return () => {
+      document.removeEventListener("visibilitychange", handleVisibilityChange);
+      clearTimeout(timeoutId);
+    };
   }, []);
 
   const handleLogout = () => {
@@ -301,6 +335,16 @@ const Landing = () => {
             <span className="stat-label">Pending Revenue</span>
             <h3 className="stat-value pending-revenue-text">{loadingStats ? "..." : formatRupee(stats.pendingRevenue)}</h3>
             <span className="revenue-sub">Outstanding Balances</span>
+          </div>
+        </div>
+
+        {/* Financial Card 8: Today's Income */}
+        <div className="stat-card card-today-income">
+          <div className="stat-card-icon">💵</div>
+          <div className="stat-card-content">
+            <span className="stat-label">TODAY'S INCOME</span>
+            <h3 className="stat-value" style={{ color: "#00E676" }}>{loadingStats ? "..." : formatRupee(stats.todayIncome)}</h3>
+            <span className="revenue-sub">Collected Today</span>
           </div>
         </div>
       </section>

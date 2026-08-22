@@ -62,10 +62,12 @@ const ControlledDateInput = ({ value, onChange, required, name, className }) => 
         required={required}
         style={{
           position: 'absolute',
-          left: '-9999px',
-          top: '-9999px',
+          left: 0,
+          top: 0,
+          width: '100%',
+          height: '100%',
           opacity: 0,
-          pointerEvents: 'none'
+          cursor: 'pointer'
         }}
       />
       <span 

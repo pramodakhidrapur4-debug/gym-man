@@ -1,4 +1,5 @@
 import Member from "../Modules/NewMem.js";
+import PaymentTransaction from "../Modules/PaymentTransaction.js";
 
 // @desc    Get Real-time MongoDB Dashboard Statistics & Revenue Summary
 // @route   GET /api/dashboard
@@ -29,6 +30,35 @@ export const getDashboardData = async (req, res) => {
     const pendingRevenue = financialStats.length > 0 ? financialStats[0].pendingRevenue : 0;
     const totalRevenueTarget = financialStats.length > 0 ? financialStats[0].totalRevenueTarget : 0;
 
+    // Calculate IST midnight boundaries for Today's Income
+    const utcNow = new Date();
+    // IST is UTC + 5:30
+    const istOffset = 5.5 * 60 * 60 * 1000;
+    const istNow = new Date(utcNow.getTime() + istOffset);
+    
+    // Start of IST today
+    const startOfTodayIST = new Date(istNow);
+    startOfTodayIST.setUTCHours(0, 0, 0, 0);
+    const startOfTodayUTC = new Date(startOfTodayIST.getTime() - istOffset);
+    
+    // End of IST today
+    const endOfTodayUTC = new Date(startOfTodayUTC.getTime() + 24 * 60 * 60 * 1000);
+
+    const todayIncomeStats = await PaymentTransaction.aggregate([
+      {
+        $match: {
+          date: { $gte: startOfTodayUTC, $lt: endOfTodayUTC }
+        }
+      },
+      {
+        $group: {
+          _id: null,
+          todayIncome: { $sum: "$amount" }
+        }
+      }
+    ]);
+    const todayIncome = todayIncomeStats.length > 0 ? todayIncomeStats[0].todayIncome : 0;
+
     return res.status(200).json({
       success: true,
       stats: {
@@ -40,6 +70,7 @@ export const getDashboardData = async (req, res) => {
         totalRevenue,
         pendingRevenue,
         totalRevenueTarget,
+        todayIncome,
       },
     });
   } catch (error) {
