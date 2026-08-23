@@ -4,6 +4,7 @@ import AllMember from "../AllMember/AllMember";
 import NewMember from "../NewMember/NewMember";
 import { useAuth } from "../../context/AuthContext";
 import { API_BASE_URL } from "../../config";
+import { fetchWithRetry } from "../../utils/fetchWithRetry";
 import { useNavigate } from "react-router-dom";
 
 const Landing = () => {
@@ -40,7 +41,7 @@ const Landing = () => {
       const storedToken = token || localStorage.getItem("gym_owner_token");
       if (storedToken) headers["Authorization"] = `Bearer ${storedToken}`;
 
-      const response = await fetch(`${API_BASE_URL}/dashboard`, {
+      const response = await fetchWithRetry(`${API_BASE_URL}/dashboard`, {
         method: "GET",
         headers,
         credentials: "include",

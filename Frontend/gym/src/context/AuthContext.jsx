@@ -3,6 +3,7 @@ import React, { createContext, useContext, useState, useEffect } from "react";
 const AuthContext = createContext();
 
 import { API_BASE_URL } from "../config";
+import { fetchWithRetry } from "../utils/fetchWithRetry";
 
 export const AuthProvider = ({ children }) => {
   const [user, setUser] = useState(null);
@@ -23,11 +24,6 @@ export const AuthProvider = ({ children }) => {
       setLoadingMessage("Starting secure server, please wait...");
     }, 3000);
 
-    const controller = new AbortController();
-    const timeoutId = setTimeout(() => {
-      controller.abort();
-    }, 10000);
-
     try {
       const headers = {
         "Content-Type": "application/json",
@@ -36,14 +32,19 @@ export const AuthProvider = ({ children }) => {
         headers["Authorization"] = `Bearer ${storedToken}`;
       }
 
-      const response = await fetch(`${API_BASE_URL}/auth/me`, {
-        method: "GET",
-        headers,
-        credentials: "include", // Pass HTTP-only session cookies
-        signal: controller.signal,
-      });
+      const response = await fetchWithRetry(
+        `${API_BASE_URL}/auth/me`, 
+        {
+          method: "GET",
+          headers,
+          credentials: "include", // Pass HTTP-only session cookies
+        },
+        (attempt, maxRetries) => {
+          setLoadingMessage(`Waking up secure backend... (Attempt ${attempt} of ${maxRetries})`);
+        }
+      );
 
-      clearTimeout(timeoutId);
+      clearTimeout(msgTimer);
       const data = await response.json();
 
       if (response.ok && data.success) {
@@ -58,10 +59,10 @@ export const AuthProvider = ({ children }) => {
         setIsAuthenticated(false);
       }
     } catch (err) {
-      clearTimeout(timeoutId);
+      clearTimeout(msgTimer);
       console.error("Session verification failed:", err);
-      // Determine if it's a timeout/network error
-      if (err.name === "AbortError" || err.message.includes("fetch") || err.message.includes("Network")) {
+      // Determine if it's a timeout/network error after retries have failed
+      if (err.name === "AbortError" || err.message.includes("fetch") || err.message.includes("Network") || err.message.includes("temporarily unavailable")) {
         setIsNetworkError(true);
       } else {
         localStorage.removeItem("gym_owner_token");

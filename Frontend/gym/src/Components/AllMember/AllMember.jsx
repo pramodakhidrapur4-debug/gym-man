@@ -2,6 +2,7 @@ import React, { useState, useEffect, useMemo, useCallback } from "react";
 import "./AllMember.css";
 import { useAuth } from "../../context/AuthContext";
 import { API_BASE_URL } from "../../config";
+import { fetchWithRetry } from "../../utils/fetchWithRetry";
 import { formatDisplayDate } from "../../utils/dateUtils";
 import ControlledDateInput from "../ControlledDateInput";
 
@@ -196,7 +197,7 @@ const AllMember = ({ initialFilter = "all", onMemberUpdated, onDurationFilterCha
 
       url += `?${params.toString()}`;
 
-      const response = await fetch(url, {
+      const response = await fetchWithRetry(url, {
         method: "GET",
         headers,
         credentials: "include",
