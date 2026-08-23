@@ -12,6 +12,7 @@ const Landing = () => {
   const [passData, setPassData] = useState({ currentPassword: "", newPassword: "", confirmPassword: "" });
   const [passStatus, setPassStatus] = useState({ type: "", msg: "" });
   const [isUpdating, setIsUpdating] = useState(false);
+  const [selectedDuration, setSelectedDuration] = useState("all");
 
   // Dynamic Dashboard Stats State from MongoDB
   const [stats, setStats] = useState({
@@ -347,6 +348,24 @@ const Landing = () => {
             <span className="revenue-sub">Collected Today</span>
           </div>
         </div>
+
+        {/* Card 9: Selected Duration Members */}
+        <div className="stat-card card-duration">
+          <div className="stat-card-icon">📅</div>
+          <div className="stat-card-content">
+            <span className="stat-label">
+              {selectedDuration === "all" ? "MEMBERS BY PLAN" :
+               selectedDuration === "12" ? "1 YEAR MEMBERS" :
+               `${selectedDuration} MONTH MEMBERS`}
+            </span>
+            <h3 className="stat-value">
+              {loadingStats ? "..." : (selectedDuration === "all" ? "—" : stats.durationStats?.[selectedDuration] || 0)}
+            </h3>
+            <span className="revenue-sub">
+              {selectedDuration === "all" ? "Select a Duration" : "Active Members in This Plan"}
+            </span>
+          </div>
+        </div>
       </section>
 
       {/* Action Bar (Below Stats, Above Content) */}
@@ -372,6 +391,7 @@ const Landing = () => {
           <AllMember
             initialFilter={activeFilter}
             onMemberUpdated={fetchDashboardStats}
+            onDurationFilterChange={setSelectedDuration}
           />
         )}
       </main>

@@ -27,7 +27,7 @@ const SelectAllCheckbox = ({ allSelected, someSelected, onChange }) => {
   );
 };
 
-const AllMember = ({ initialFilter = "all", onMemberUpdated }) => {
+const AllMember = ({ initialFilter = "all", onMemberUpdated, onDurationFilterChange }) => {
   const [members, setMembers] = useState([]);
   const [loading, setLoading] = useState(true);
   const [search, setSearch] = useState("");
@@ -246,6 +246,9 @@ const AllMember = ({ initialFilter = "all", onMemberUpdated }) => {
   const handleDurationChange = (val) => {
     setDurationFilter(val);
     setPage(1);
+    if (onDurationFilterChange) {
+      onDurationFilterChange(val);
+    }
   };
 
   const handleSelectAllVisible = () => {
