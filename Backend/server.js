@@ -7,6 +7,7 @@ import adminRoutes from './Routes/adminRoutes.js';
 import memberRoutes from './Routes/memberRoutes.js';
 import dashboardRoutes from './Routes/dashboardRoutes.js';
 import { seedDefaultOwner } from './Controller/AdminController.js';
+import startCleanupCron from './cron/cleanExpiredMembers.js';
 
 dotenv.config();
 
@@ -67,6 +68,9 @@ mong();
 setTimeout(() => {
   seedDefaultOwner();
 }, 2000);
+
+// Initialize Scheduled Tasks
+startCleanupCron();
 
 // Mounted API Endpoints
 app.use('/api/auth', adminRoutes);
