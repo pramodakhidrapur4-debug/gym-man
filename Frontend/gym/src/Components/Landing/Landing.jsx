@@ -357,13 +357,16 @@ const Landing = () => {
             <span className="stat-label">
               {selectedDuration === "all" ? "MEMBERS BY PLAN" :
                selectedDuration === "12" ? "1 YEAR MEMBERS" :
+               selectedDuration === "expired93" ? "EXPIRED > 93 DAYS MEMBERS" :
                `${selectedDuration} MONTH MEMBERS`}
             </span>
             <h3 className="stat-value">
               {loadingStats ? "..." : (selectedDuration === "all" ? "—" : stats.durationStats?.[selectedDuration] || 0)}
             </h3>
             <span className="revenue-sub">
-              {selectedDuration === "all" ? "Select a Duration" : "Active Members in This Plan"}
+              {selectedDuration === "all" ? "Select a Duration" : 
+               selectedDuration === "expired93" ? "Members eligible for deletion" : 
+               "Active Members in This Plan"}
             </span>
           </div>
         </div>

@@ -655,6 +655,7 @@ const AllMember = ({ initialFilter = "all", onMemberUpdated, onDurationFilterCha
               onClick={() => setIsDurationMenuOpen(!isDurationMenuOpen)}
             >
               {durationFilter === "all" ? "All Durations" : 
+               durationFilter === "expired93" ? "🗑️ Expired > 93 Days" :
                durationFilter === "12" ? "12 Months (1 Year)" : 
                `${durationFilter} Month${durationFilter === "1" ? "" : "s"}`}
               <svg className={`chevron ${isDurationMenuOpen ? "open" : ""}`} width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
@@ -678,6 +679,9 @@ const AllMember = ({ initialFilter = "all", onMemberUpdated, onDurationFilterCha
                 </button>
                 <button type="button" className={`dropdown-item ${durationFilter === "12" ? "selected" : ""}`} onClick={() => { handleDurationChange("12"); setIsDurationMenuOpen(false); }}>
                   <span className="check-placeholder">{durationFilter === "12" ? "✓" : ""}</span> 12 Months (1 Year)
+                </button>
+                <button type="button" className={`dropdown-item ${durationFilter === "expired93" ? "selected" : ""}`} onClick={() => { handleDurationChange("expired93"); setIsDurationMenuOpen(false); }}>
+                  <span className="check-placeholder">{durationFilter === "expired93" ? "✓" : ""}</span> 🗑️ Expired &gt; 93 Days
                 </button>
               </div>
             )}
@@ -1094,7 +1098,7 @@ const AllMember = ({ initialFilter = "all", onMemberUpdated, onDurationFilterCha
               <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"></path><line x1="12" y1="9" x2="12" y2="13"></line><line x1="12" y1="17" x2="12.01" y2="17"></line></svg>
             </div>
             <h3 className="danger-title">Delete {selectedMembers.length === 1 ? "1 Member" : `${selectedMembers.length} Members`}?</h3>
-            <p className="danger-subtitle">You are about to permanently delete the selected members. This action cannot be undone.</p>
+            <p className="danger-subtitle">Are you sure you want to permanently delete these members? This action cannot be undone.</p>
             {actionError && <div className="alert-banner error" style={{ margin: "10px 0" }}>{actionError}</div>}
             <div className="danger-actions">
               <button onClick={() => setBulkDeleteConfirm(false)} disabled={actionLoading} className="danger-cancel">Cancel</button>

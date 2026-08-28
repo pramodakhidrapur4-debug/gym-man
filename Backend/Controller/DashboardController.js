@@ -64,7 +64,15 @@ export const getDashboardData = async (req, res) => {
       "1": await Member.countDocuments({ expiryDate: { $gt: now }, duration: { $gte: 28, $lte: 31 } }),
       "3": await Member.countDocuments({ expiryDate: { $gt: now }, duration: { $gte: 84, $lte: 93 } }),
       "6": await Member.countDocuments({ expiryDate: { $gt: now }, duration: { $gte: 168, $lte: 186 } }),
-      "12": await Member.countDocuments({ expiryDate: { $gt: now }, duration: { $gte: 365, $lte: 366 } })
+      "12": await Member.countDocuments({ expiryDate: { $gt: now }, duration: { $gte: 365, $lte: 366 } }),
+      "expired93": await Member.countDocuments({
+        $expr: {
+          $gt: [
+            { $floor: { $divide: [ { $subtract: [ now, "$expiryDate" ] }, 86400000 ] } },
+            93
+          ]
+        }
+      })
     };
 
     return res.status(200).json({

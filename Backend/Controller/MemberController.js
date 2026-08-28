@@ -164,20 +164,31 @@ export const getAllMembers = async (req, res) => {
     }
 
     if (durationFilter && durationFilter !== "all") {
-      if (filter === "expired") {
-        query.expiryDate = { $gt: now, $lte: now }; // Impossible condition to force 0 results
+      if (durationFilter === "expired93") {
+        // EXACT LOGIC: Math.floor((now - expiryDate) / (1000 * 60 * 60 * 24)) > 93
+        query.$expr = {
+          $gt: [
+            { $floor: { $divide: [ { $subtract: [ now, "$expiryDate" ] }, 86400000 ] } },
+            93
+          ]
+        };
+        delete query.expiryDate;
       } else {
-        query.expiryDate = { $gt: now }; // Enforce active member requirement
-      }
+        if (filter === "expired") {
+          query.expiryDate = { $gt: now, $lte: now }; // Impossible condition to force 0 results
+        } else {
+          query.expiryDate = { $gt: now }; // Enforce active member requirement
+        }
 
-      if (durationFilter === "1") {
-        query.duration = { $gte: 28, $lte: 31 };
-      } else if (durationFilter === "3") {
-        query.duration = { $gte: 84, $lte: 93 };
-      } else if (durationFilter === "6") {
-        query.duration = { $gte: 168, $lte: 186 };
-      } else if (durationFilter === "12") {
-        query.duration = { $gte: 365, $lte: 366 };
+        if (durationFilter === "1") {
+          query.duration = { $gte: 28, $lte: 31 };
+        } else if (durationFilter === "3") {
+          query.duration = { $gte: 84, $lte: 93 };
+        } else if (durationFilter === "6") {
+          query.duration = { $gte: 168, $lte: 186 };
+        } else if (durationFilter === "12") {
+          query.duration = { $gte: 365, $lte: 366 };
+        }
       }
     }
 
