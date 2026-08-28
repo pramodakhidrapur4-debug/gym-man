@@ -305,13 +305,8 @@ const NewMember = ({ onMemberAdded }) => {
 
   const handlePresetDays = (days) => {
     let suggestedFee = 1000;
-    if (days === 7) suggestedFee = 300;
-    else if (days === 15) suggestedFee = 500;
-    else if (days === 30) suggestedFee = 1000;
-    else if (days === 45) suggestedFee = 1500;
-    else if (days === 90) suggestedFee = 2700;
-    else if (days === 180) suggestedFee = 5000;
-    else if (days === 365) suggestedFee = 9000;
+    if (days === 30) suggestedFee = 500;
+    else if (days === 93) suggestedFee = 1200;
 
     setFormData({
       ...formData,
@@ -538,12 +533,8 @@ const NewMember = ({ onMemberAdded }) => {
               <span className="days-suffix">Days</span>
             </div>
             <div className="preset-days-pills">
-              <button type="button" onClick={() => handlePresetDays(7)} className={formData.duration == 7 ? "active-preset" : ""}>7 Days</button>
-              <button type="button" onClick={() => handlePresetDays(15)} className={formData.duration == 15 ? "active-preset" : ""}>15 Days</button>
               <button type="button" onClick={() => handlePresetDays(30)} className={formData.duration == 30 ? "active-preset" : ""}>30 Days</button>
-              <button type="button" onClick={() => handlePresetDays(45)} className={formData.duration == 45 ? "active-preset" : ""}>45 Days</button>
-              <button type="button" onClick={() => handlePresetDays(90)} className={formData.duration == 90 ? "active-preset" : ""}>90 Days</button>
-              <button type="button" onClick={() => handlePresetDays(365)} className={formData.duration == 365 ? "active-preset" : ""}>365 Days</button>
+              <button type="button" onClick={() => handlePresetDays(93)} className={formData.duration == 93 ? "active-preset" : ""}>93 Days</button>
             </div>
           </div>
 
